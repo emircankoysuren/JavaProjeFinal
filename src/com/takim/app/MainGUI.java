@@ -30,8 +30,8 @@ public class MainGUI extends Application {
     public void start(Stage primaryStage) {
         primaryStage.setTitle(TAKIM_ADI + " - Yonetim Paneli");
 
-        // Uygulama basladiginda verileri yukle (I/O)
-        DosyaIslemleri.dosyadanVeriOku();
+
+
 
         // Ana Layout: GridPane (GUI elemanlarini duzenlemek icin)
         GridPane grid = new GridPane();
@@ -95,7 +95,7 @@ public class MainGUI extends Application {
         try {
             // Ornek Ekleme (Test amacli, Form elemanlari eklenebilir)
             Futbolcu f = new Futbolcu("Mauro", "Icardi", LocalDate.of(1993, 2, 16), "GS9", 9, "FORVET", 15, 5);
-            git --versiongit init      service.futbolcuEkle(f);
+               service.futbolcuEkle(f);
             showMessage(f.getAd() + " kadroya eklendi.", Formatlayici.YESIL);
         } catch (Exception e) {
             showMessage("Ekleme basarisiz: " + e.getMessage(), Formatlayici.KIRMİZİ);

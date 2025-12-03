@@ -77,4 +77,24 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
     @Override public String detayliIstatistikGetir(LocalDate baslangic, LocalDate bitis) { return "Detaylı rapor."; }
     @Override public boolean raporDurumuKontrolEt() { return true; }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); } // Kisi abstract metot implementasyonu
+
+    /**
+     * Futbolcunun forma numarası ile performans verilerini görüntüler.
+     */
+    public String getMevki() {
+        return mevki;
+    }
+    public int getgolSayisi() {
+        return golSayisi;
+    }
+    public int getasistSayisi() {
+        return asistSayisi;
+    }
+    public String getPerformansBilgileri() {
+        // getAd() ve getSoyad() metotları Kisi sınıfından miras alınmıştır.
+        return getAd() + " " + getSoyad() +
+                " (" + mevki + ") | Forma No: " + formaNo +
+                " | Gol: " + golSayisi +
+                ", Asist: " + asistSayisi;
+    }
 }
