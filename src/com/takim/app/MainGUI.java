@@ -2,20 +2,30 @@ package com.takim.app;
 
 import com.takim.service.TakimService;
 import com.takim.model.Futbolcu;
+import com.takim.model.TeknikDirektor;
+import com.takim.model.YardimciAntrenor;
+import com.takim.model.Fizyoterapist;
+import com.takim.model.Kisi;
 import com.takim.util.Formatlayici;
 import com.takim.util.DosyaIslemleri;
+
+// JavaFX Gerekli İçe Aktarmalar
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+
+// Ek İçe Aktarmalar
 import java.time.LocalDate;
-import java.util.InputMismatchException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * JavaFX GUI Uygulamasının Ana Sınıfı.
- * 12. Bölüm: Basit GUI (Bonus) gereksinimini karsilar.
+ * Veri kalıcılığı ve personel ekleme/silme mantığı eklendi.
  */
 public class MainGUI extends Application {
 
@@ -23,89 +33,296 @@ public class MainGUI extends Application {
 
     private final TakimService service = new TakimService();
 
-    // GUI ogelerini tutacak alanlar
     private TextArea messageArea = new TextArea();
+
+    private int dynamicPlayerCounter = 1;
+    private int dynamicStaffCounter = 1;
 
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle(TAKIM_ADI + " - Yonetim Paneli");
 
-
-
-
-        // Ana Layout: GridPane (GUI elemanlarini duzenlemek icin)
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(20));
-        grid.setVgap(15); // Dikey bosluk
-        grid.setHgap(15); // Yatay bosluk
+        grid.setVgap(15);
+        grid.setHgap(15);
 
         // --- 1. KOMPONENT: Baslik ---
         Label title = new Label(TAKIM_ADI + " KADRO VE PERFORMANS YONETİMİ");
-        // Hatanin olabilecegi satir (Tirnak isaretleri kontrol edildi)
         title.setStyle("-fx-font-size: 16px; -fx-font-weight: bold;");
-        GridPane.setConstraints(title, 0, 0, 2, 1); // 0. satir, 2 sutun kaplar
+        GridPane.setConstraints(title, 0, 0, 2, 1);
 
-        // --- 2. Mesaj Alani (Konsol yerine) ---
+        // --- 2. Mesaj Alanı ---
         messageArea.setEditable(false);
-        messageArea.setPrefHeight(150);
+        messageArea.setPrefHeight(300);
         messageArea.setWrapText(true);
-        GridPane.setConstraints(messageArea, 0, 4, 2, 1); // 4. satir, 2 sutun kaplar
+        GridPane.setConstraints(messageArea, 0, 4, 2, 2);
 
         // --- BUTONLAR ---
 
-        Button addPlayerButton = new Button("1. Yeni Futbolcu Ekle (Orn)");
-        addPlayerButton.setMaxWidth(Double.MAX_VALUE);
-        addPlayerButton.setOnAction(e -> handleAddPlayer());
-        GridPane.setConstraints(addPlayerButton, 0, 1);
+        // Satır 1
+        Button addPersonnelButton = new Button("1. Yeni Personel Ekle (Seçim)");
+        addPersonnelButton.setMaxWidth(Double.MAX_VALUE);
+        addPersonnelButton.setOnAction(e -> handleNewPersonnelSelection());
+        GridPane.setConstraints(addPersonnelButton, 0, 1);
 
-        Button listPlayersButton = new Button("3. Kadroyu Listele (Konsol)");
+        Button listPlayersButton = new Button("3. Personel Listesini Görüntüle");
         listPlayersButton.setMaxWidth(Double.MAX_VALUE);
         listPlayersButton.setOnAction(e -> handleListPlayers());
         GridPane.setConstraints(listPlayersButton, 1, 1);
 
+        // Satır 2
         Button saveReportButton = new Button("6. Raporu Kaydet (I/O)");
         saveReportButton.setMaxWidth(Double.MAX_VALUE);
         saveReportButton.setOnAction(e -> handleSaveReport());
         GridPane.setConstraints(saveReportButton, 0, 2);
 
-        Button sortGoalsButton = new Button("4. Gol Siralamasi");
+        Button sortGoalsButton = new Button("4. Gol Siralamasi (Konsola Yaz)");
         sortGoalsButton.setMaxWidth(Double.MAX_VALUE);
         sortGoalsButton.setOnAction(e -> handleSortGoals());
         GridPane.setConstraints(sortGoalsButton, 1, 2);
 
-        // --- Tum Ogeleri Ekleme ---
-        grid.getChildren().addAll(title, addPlayerButton, listPlayersButton, saveReportButton, sortGoalsButton, messageArea);
+        // Satır 3
+        Button saveDataButton = new Button("7. Tüm Personeli Kaydet"); // BUTON YAZISI GÜNCELLENDİ
+        saveDataButton.setMaxWidth(Double.MAX_VALUE);
+        saveDataButton.setOnAction(e -> handleSaveData());
+        GridPane.setConstraints(saveDataButton, 1, 3);
 
-        Scene scene = new Scene(grid, 600, 450);
+        Button deletePlayerButton = new Button("8. Personel Sil (Ad/Soyad)");
+        deletePlayerButton.setMaxWidth(Double.MAX_VALUE);
+        deletePlayerButton.setOnAction(e -> handleDeletePlayer());
+        GridPane.setConstraints(deletePlayerButton, 0, 3);
+
+
+        // --- Uygulama Kapanırken Kaydetme ---
+        primaryStage.setOnCloseRequest(event -> {
+            handleSaveData(); // Tüm personeli kaydet
+            System.out.println("Uygulama kapatiliyor. Veriler kaydedildi.");
+        });
+
+        // --- Tum Ogeleri Ekleme ---
+        grid.getChildren().addAll(title, addPersonnelButton, listPlayersButton,
+                saveReportButton, sortGoalsButton,
+                saveDataButton, deletePlayerButton,
+                messageArea);
+
+        Scene scene = new Scene(grid, 750, 650);
         primaryStage.setScene(scene);
         primaryStage.show();
     }
 
-    // ------------------- BUTON OLAY YONETICILERI -------------------
+    // ------------------- YARDIMCI METOTLAR -------------------
+
+    private Optional<String> promptInput(String title, String header, String content, String defaultValue) {
+        TextInputDialog dialog = new TextInputDialog(defaultValue);
+        dialog.setTitle(title);
+        dialog.setHeaderText(header);
+        dialog.setContentText(content);
+        return dialog.showAndWait();
+    }
 
     private void showMessage(String message, String color) {
-        // Konsol formatlayici yerine, mesaji hem TextArea'ya yazdirir
         messageArea.appendText(message + "\n");
-        // Hem de debug/konsol ciktisinda rengi korur (Bonus gereksinimi)
         System.out.println(Formatlayici.renklendir(message, color));
     }
 
-    private void handleAddPlayer() {
-        // Bu metod, kullanici arayuzu basitelestirilmesi adina ornek veri ekler.
-        try {
-            // Ornek Ekleme (Test amacli, Form elemanlari eklenebilir)
-            Futbolcu f = new Futbolcu("Mauro", "Icardi", LocalDate.of(1993, 2, 16), "GS9", 9, "FORVET", 15, 5);
-               service.futbolcuEkle(f);
-            showMessage(f.getAd() + " kadroya eklendi.", Formatlayici.YESIL);
-        } catch (Exception e) {
-            showMessage("Ekleme basarisiz: " + e.getMessage(), Formatlayici.KIRMİZİ);
+    private void handleNewPersonnelSelection() {
+        List<String> choices = Arrays.asList(
+                "1. Futbolcu (Oyuncu)",
+                "2. Teknik Direktör",
+                "3. Yardımcı Antrenör",
+                "4. Fizyoterapist"
+        );
+
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+        dialog.setTitle("Yeni Personel Ekleme");
+        dialog.setHeaderText("Lütfen eklemek istediğiniz personel tipini seçin.");
+        dialog.setContentText("Tip:");
+
+        Optional<String> result = dialog.showAndWait();
+
+        if (result.isPresent()) {
+            switch (result.get().charAt(0)) {
+                case '1':
+                    handleAddNewFutbolcu();
+                    break;
+                case '2':
+                    handleAddNewTeknikDirektor();
+                    break;
+                case '3':
+                    handleAddNewYardimciAntrenor();
+                    break;
+                case '4':
+                    handleAddNewFizyoterapist();
+                    break;
+                default:
+                    showMessage("Hata: Geçersiz personel tipi seçimi.", Formatlayici.KIRMİZİ);
+            }
         }
     }
 
+    private void handleAddNewFutbolcu() {
+        try {
+            int formNo = 50 + dynamicPlayerCounter;
+            Futbolcu f = new Futbolcu("Yeni", "Oyuncu" + dynamicPlayerCounter,
+                    LocalDate.of(2000, 1, 1), "DYN" + formNo,
+                    formNo, "ORTASAHA", 0, 0);
+            service.futbolcuEkle(f);
+            showMessage(f.getAd() + " " + f.getSoyad() + " ("+f.getFormaNo()+") kadroya eklendi. Listeyi kontrol etmek için konsola bakın.", Formatlayici.YESIL);
+
+            handleSaveData();
+            dynamicPlayerCounter++;
+
+        } catch (Exception e) {
+            showMessage("Futbolcu ekleme basarisiz: " + e.getMessage(), Formatlayici.KIRMİZİ);
+        }
+    }
+
+    // ------------------- TEKNİK DİREKTÖR EKLEME -------------------
+
+    private void handleAddNewTeknikDirektor() {
+        Optional<String> adOpt = promptInput("Teknik Direktör Ekle", "Temel Bilgiler", "Ad:", "Okan");
+        Optional<String> soyadOpt = adOpt.flatMap(ad -> promptInput("Teknik Direktör Ekle", "Temel Bilgiler", "Soyad:", "Buruk"));
+        Optional<String> maasOpt = soyadOpt.flatMap(soyad -> promptInput("Teknik Direktör Ekle", "Temel Bilgiler", "Maaş:", "500000"));
+        Optional<String> eskiTakimOpt = maasOpt.flatMap(maas -> promptInput("Teknik Direktör Özellikleri", "Özel Bilgiler", "Eski Takım:", "B.B. Erzurumspor"));
+        Optional<String> puanOrtOpt = eskiTakimOpt.flatMap(eskiTakim -> promptInput("Teknik Direktör Özellikleri", "Özel Bilgiler", "Puan Ortalaması (örn: 1.5):", "1.5"));
+        Optional<String> kupaSayisiOpt = puanOrtOpt.flatMap(puan -> promptInput("Teknik Direktör Özellikleri", "Özel Bilgiler", "Kupa Sayısı:", "5"));
+
+        if (kupaSayisiOpt.isPresent()) {
+            try {
+                String ad = adOpt.get();
+                String soyad = soyadOpt.get();
+                double maas = Double.parseDouble(maasOpt.get());
+                String tcNo = "TRD"+dynamicStaffCounter;
+                String eskiTakim = eskiTakimOpt.get();
+                double puanOrt = Double.parseDouble(puanOrtOpt.get());
+                int kupaSayisi = Integer.parseInt(kupaSayisiOpt.get());
+
+                TeknikDirektor td = new TeknikDirektor(ad, soyad, LocalDate.of(1973, 10, 19), tcNo,
+                        maas, LocalDate.of(2022, 6, 1), 2005, "4-2-3-1", 100000,
+                        eskiTakim, puanOrt, kupaSayisi);
+
+                service.getKisiListesi().add(td); // Tüm personeli tutan listeye ekle
+                showMessage(td.getAd() + " " + td.getSoyad() + " (Teknik Direktör) eklendi.", Formatlayici.MAVI);
+                td.bilgiYazdir();
+                handleSaveData();
+                dynamicStaffCounter++;
+
+            } catch (NumberFormatException e) {
+                showMessage("HATA: Maaş, Puan Ortalaması veya Kupa Sayısı sayısal olmalıdır. Girişler kontrol edilsin.", Formatlayici.KIRMİZİ);
+            } catch (Exception e) {
+                showMessage("Beklenmedik bir hata oluştu: " + e.getMessage(), Formatlayici.KIRMİZİ);
+            }
+        }
+    }
+
+    // ------------------- YARDIMCI ANTRENÖR EKLEME -------------------
+
+    private void handleAddNewYardimciAntrenor() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Puanlar 1 ile 20 arasında girilmelidir.", ButtonType.OK);
+        alert.setTitle("Puan Aralığı Uyarısı");
+        alert.showAndWait();
+
+        Optional<String> adOpt = promptInput("Yrd. Antrenör Ekle", "Temel Bilgiler", "Ad:", "Ismail");
+        Optional<String> soyadOpt = adOpt.flatMap(ad -> promptInput("Yrd. Antrenör Ekle", "Temel Bilgiler", "Soyad:", "Şenol"));
+        Optional<String> maasOpt = soyadOpt.flatMap(soyad -> promptInput("Yrd. Antrenör Ekle", "Temel Bilgiler", "Maaş:", "200000"));
+
+        Optional<String> uzmanlikOpt = maasOpt.flatMap(m -> promptInput("Yrd. Antrenör Özellikleri", "Özel Bilgiler", "Uzmanlık Alanı:", "Hucum"));
+        Optional<String> hucumOpt = uzmanlikOpt.flatMap(u -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Hücum Puanı:", "15"));
+        Optional<String> defansOpt = hucumOpt.flatMap(h -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Defans Puanı:", "10"));
+        Optional<String> taktikOpt = defansOpt.flatMap(d -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Taktik Puanı:", "17"));
+        Optional<String> teknikOpt = taktikOpt.flatMap(t -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Teknik Puanı:", "16"));
+        Optional<String> disiplinOpt = teknikOpt.flatMap(te -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Disiplin Puanı:", "18"));
+        Optional<String> uyumOpt = disiplinOpt.flatMap(di -> promptInput("Yrd. Antrenör Puanları (1-20)", "Puan Girişi", "Uyumluluk Puanı:", "19"));
+
+
+        if (uyumOpt.isPresent()) {
+            try {
+                String ad = adOpt.get();
+                String soyad = soyadOpt.get();
+                double maas = Double.parseDouble(maasOpt.get());
+                String tcNo = "TRA"+dynamicStaffCounter;
+                String uzmanlik = uzmanlikOpt.get();
+                int hucum = Integer.parseInt(hucumOpt.get());
+                int defans = Integer.parseInt(defansOpt.get());
+                int taktik = Integer.parseInt(taktikOpt.get());
+                int teknik = Integer.parseInt(teknikOpt.get());
+                int disiplin = Integer.parseInt(disiplinOpt.get());
+                int uyum = Integer.parseInt(uyumOpt.get());
+
+                YardimciAntrenor ya = new YardimciAntrenor(ad, soyad, LocalDate.of(1985, 3, 10), tcNo,
+                        maas, LocalDate.of(2023, 7, 1), uzmanlik, 1000.5,
+                        hucum, defans, taktik, teknik, disiplin, uyum);
+
+                service.getKisiListesi().add(ya); // Tüm personeli tutan listeye ekle
+                showMessage(ya.getAd() + " " + ya.getSoyad() + " (Yardimci Antrenor) eklendi.", Formatlayici.MAVI);
+                ya.bilgiYazdir();
+                handleSaveData();
+                dynamicStaffCounter++;
+
+            } catch (NumberFormatException e) {
+                showMessage("HATA: Maaş veya Puanlar sayısal olmalıdır. Girişler kontrol edilsin.", Formatlayici.KIRMİZİ);
+            } catch (Exception e) {
+                showMessage("Hata oluştu: " + e.getMessage(), Formatlayici.KIRMİZİ);
+            }
+        }
+    }
+
+    // ------------------- FİZYOTERAPİST EKLEME -------------------
+
+    private void handleAddNewFizyoterapist() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Puanlar 1 ile 20 arasında girilmelidir.", ButtonType.OK);
+        alert.setTitle("Puan Aralığı Uyarısı");
+        alert.showAndWait();
+
+        Optional<String> adOpt = promptInput("Fizyoterapist Ekle", "Temel Bilgiler", "Ad:", "Ali");
+        Optional<String> soyadOpt = adOpt.flatMap(ad -> promptInput("Fizyoterapist Ekle", "Temel Bilgiler", "Soyad:", "Can"));
+        Optional<String> maasOpt = soyadOpt.flatMap(soyad -> promptInput("Fizyoterapist Ekle", "Temel Bilgiler", "Maaş:", "150000"));
+
+        Optional<String> fizyoPuanOpt = maasOpt.flatMap(m -> promptInput("Fizyoterapist Puanları (1-20)", "Puan Girişi", "Fizyoterapi Puanı:", "18"));
+        Optional<String> sporBilimiOpt = fizyoPuanOpt.flatMap(f -> promptInput("Fizyoterapist Puanları (1-20)", "Puan Girişi", "Spor Bilimi Puanı:", "15"));
+        Optional<String> uyumOpt = sporBilimiOpt.flatMap(s -> promptInput("Fizyoterapist Puanları (1-20)", "Puan Girişi", "Uyumluluk Puanı:", "19"));
+        Optional<String> disiplinOpt = uyumOpt.flatMap(u -> promptInput("Fizyoterapist Puanları (1-20)", "Puan Girişi", "Disiplin Puanı:", "17"));
+
+
+        if (disiplinOpt.isPresent()) {
+            try {
+                String ad = adOpt.get();
+                String soyad = soyadOpt.get();
+                double maas = Double.parseDouble(maasOpt.get());
+                String tcNo = "TRF"+dynamicStaffCounter;
+                String sertifika = "SERT_X"+dynamicStaffCounter;
+
+                int fizyoPuan = Integer.parseInt(fizyoPuanOpt.get());
+                int sporBilimi = Integer.parseInt(sporBilimiOpt.get());
+                int uyum = Integer.parseInt(uyumOpt.get());
+                int disiplin = Integer.parseInt(disiplinOpt.get());
+
+                Fizyoterapist fizyo = new Fizyoterapist(ad, soyad, LocalDate.of(1988, 1, 1), tcNo,
+                        maas, LocalDate.of(2021, 5, 15),
+                        sertifika, "Ortopedi", true,
+                        fizyoPuan, sporBilimi, uyum, disiplin);
+
+                service.getKisiListesi().add(fizyo); // Tüm personeli tutan listeye ekle
+                showMessage(fizyo.getAd() + " " + fizyo.getSoyad() + " (Fizyoterapist) eklendi.", Formatlayici.MAVI);
+                fizyo.bilgiYazdir();
+                handleSaveData();
+                dynamicStaffCounter++;
+            } catch (NumberFormatException e) {
+                showMessage("HATA: Maaş veya Puanlar sayısal olmalıdır. Girişler kontrol edilsin.", Formatlayici.KIRMİZİ);
+            } catch (Exception e) {
+                showMessage("Hata oluştu: " + e.getMessage(), Formatlayici.KIRMİZİ);
+            }
+        }
+    }
+
+    // ------------------- KALAN METOTLAR -------------------
+
     private void handleListPlayers() {
-        // TableView yerine konsola listeleme
-        showMessage("Mevcut kadro listesi konsola yaziliyor...", Formatlayici.MAVI);
+        showMessage("Kadro listesi konsola yazdırılıyor (Futbolcular)...", Formatlayici.MAVI);
         service.listeYazdir(service.getFutbolcuKadrosu());
+        showMessage("Tüm personel listesi konsola yazdırılıyor (Hepsi)...", Formatlayici.MAVI);
+        service.listeYazdir(service.getKisiListesi()); // Tüm personeli göster
     }
 
     private void handleSaveReport() {
@@ -118,10 +335,44 @@ public class MainGUI extends Application {
     }
 
     private void handleSortGoals() {
-        showMessage("Gol siralamasi konsola yaziliyor...", Formatlayici.MAVI);
+        showMessage("Gol siralamasi yapildi. Sonuçlar konsola yazdırıldı.", Formatlayici.MAVI);
         service.golSiralamasiYap();
+        service.listeYazdir(service.getFutbolcuKadrosu());
     }
 
+    private void handleSaveData() {
+        try {
+            // KRİTİK DÜZELTME: Tüm personeli kaydetme metodunu çağırır
+            DosyaIslemleri.personelVerileriniKaydet(service.getKisiListesi());
+        } catch (Exception ex) {
+            showMessage("Veri Kaydedilemedi: " + ex.getMessage(), Formatlayici.KIRMİZİ);
+        }
+    }
+
+    private void handleDeletePlayer() {
+
+        Optional<String> adOpt = promptInput("Personel Silme", "Silinecek kişinin adını girin.", "Ad:", "");
+        Optional<String> soyadOpt = adOpt.flatMap(ad -> promptInput("Personel Silme", "Silinecek kişinin soyadını girin.", "Soyad:", ""));
+
+        if (soyadOpt.isPresent()) {
+            try {
+                String ad = adOpt.get();
+                String soyad = soyadOpt.get();
+
+                boolean success = service.personelSil(ad, soyad);
+
+                if (success) {
+                    showMessage(ad + " " + soyad + " isimli personel/futbolcu başarıyla kadrodan çıkarıldı. Listeyi kontrol etmek için tekrar 'Personel Listesini Görüntüle' butonuna basın.", Formatlayici.YESIL);
+                    handleSaveData();
+                } else {
+                    showMessage("HATA: " + ad + " " + soyad + " isimli personel/futbolcu kadroda bulunamadı.", Formatlayici.KIRMİZİ);
+                }
+
+            } catch (Exception e) {
+                showMessage("Hata oluştu: " + e.getMessage(), Formatlayici.KIRMİZİ);
+            }
+        }
+    }
 
     public static void main(String[] args) {
         launch(args);

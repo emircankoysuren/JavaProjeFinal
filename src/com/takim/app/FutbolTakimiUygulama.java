@@ -14,73 +14,54 @@ import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
 
-/**
- * 1.1: Ana sinif (main metodu iceren, projeyi baslatan sinif).
- * 11. Bolum: Konsol menulu arayuzu ve donguyu yonetir.
- */
 public class FutbolTakimiUygulama {
 
-    // 1.1: Ana Sınıf Gereksinimi
     public static final String TAKIM_ADI = "GALATASARAY SPOR KULÜBÜ";
 
     private static Scanner scanner = new Scanner(System.in);
     private static TakimService service = new TakimService();
 
-    // 10: Statik alan gereksinimi (Ana sınıfta da bir static alan)
     private static boolean uygulamaCalisiyor = true;
 
     public static void main(String[] args) {
 
         System.out.println(Formatlayici.renklendir(TAKIM_ADI + " Konsol Yönetim Sistemi'ne Hos Geldiniz!", Formatlayici.YESIL));
 
-        // 9. Bolum: do-while dongusu kullanimi (Menü döngüsü)
         do {
             anaMenuyuGoster();
-            // 7. Bolum: try-catch blogu kullanimi (3/5) - Kullanici girislerini yonetmek icin
             try {
-                System.out.print(Formatlayici.renklendir("Seciminizi girin (1-8): ", Formatlayici.MAVI));
+                System.out.print(Formatlayici.renklendir("Seciminizi girin (1-9): ", Formatlayici.MAVI));
                 int secim = scanner.nextInt();
-                scanner.nextLine(); // buffer temizleme
+                scanner.nextLine();
 
                 menuyuIsle(secim);
 
             } catch (InputMismatchException e) {
-                // 7. Bolum: 3 farkli exception turunden ucuncusu yakalandi.
                 System.err.println(Formatlayici.renklendir("HATA: Lutfen sadece sayi giriniz.", Formatlayici.KIRMİZİ));
-                scanner.nextLine(); // Yanlis girisi tuket
+                scanner.nextLine();
             } catch (Exception e) {
                 System.err.println(Formatlayici.renklendir("Beklenmedik bir hata olustu: " + e.getMessage(), Formatlayici.KIRMİZİ));
             }
 
-        } while (uygulamaCalisiyor); // 9. Bolum: while dongusu
+        } while (uygulamaCalisiyor);
 
         System.out.println("Uygulama kapatiliyor. Iyi gunler.");
     }
 
-    // 10: Static metot gereksinimi (Ana sınıfta bir static metot)
-
-    /**
-     * 11. Bolum: En az 8 maddeli ana menuyu gosterir.
-     * Güncellendi: 9 maddeli menü.
-     */
     private static void anaMenuyuGoster() {
-        System.out.println(Formatlayici.renklendir("\n--- ANA MENU ---", Formatlayici.MAVI)); //
-        System.out.println("1. Yeni Personel/Futbolcu Ekle"); //
-        System.out.println("2. Performans Verisi Gir (Gol/Asist)"); //
-        System.out.println("3. Performans Verilerini Görüntüle"); // YENİ SIRA
-        System.out.println("4. Kadroyu Listele"); // YENİ SIRA
-        System.out.println("5. Gol Siralamasini Gor"); // YENİ SIRA
-        System.out.println("6. Personel Maas Hesaplamasi Yap"); //
-        System.out.println("7. Raporu Dosyaya Kaydet"); //
-        System.out.println("8. Cikis"); //
+        System.out.println(Formatlayici.renklendir("\n--- ANA MENU ---", Formatlayici.MAVI));
+        System.out.println("1. Yeni Personel/Futbolcu Ekle");
+        System.out.println("2. Performans Verisi Gir (Gol/Asist)");
+        System.out.println("3. Performans Verilerini Görüntüle");
+        System.out.println("4. Kadroyu Listele");
+        System.out.println("5. Gol Siralamasini Gor");
+        System.out.println("6. Personel Maas Hesaplamasi Yap");
+        System.out.println("7. Raporu Dosyaya Kaydet");
+        System.out.println("8. Personel Sil (Ad/Soyad)");
+        System.out.println("9. Cikis");
     }
 
-    /**
-     * 11. Bolum: Menudeki secimi isler (switch-case).
-     * Güncellendi: 9 seçeneğe göre case'ler yeniden düzenlendi.
-     */
     private static void menuyuIsle(int secim) {
-        // 9. Bolum: switch-case yapisi kullanimi (en az 4 case)
         switch (secim) {
             case 1:
                 personelTipiSecimEkrani();
@@ -88,14 +69,13 @@ public class FutbolTakimiUygulama {
             case 2:
                 performansGuncellemeEkrani();
                 break;
-            case 3: // Performans Verilerini Görüntüle (Eski 5)
+            case 3:
                 performansGoruntulemeEkrani();
                 break;
-            case 4: // Kadroyu Listele (Eski 3)
-                // Dinamik polimorfizm
+            case 4:
                 service.listeYazdir(service.getFutbolcuKadrosu());
                 break;
-            case 5: // Gol Siralamasini Gor (Eski 4)
+            case 5:
                 service.golSiralamasiYap();
                 break;
             case 6:
@@ -104,7 +84,10 @@ public class FutbolTakimiUygulama {
             case 7:
                 dosyayaKaydetmeEkrani();
                 break;
-            case 8: // Çıkış
+            case 8: // Personel Silme
+                personelSilmeEkrani();
+                break;
+            case 9: // Çıkış
                 DosyaIslemleri.kadroVerileriniKaydet(service.getFutbolcuKadrosu());
                 uygulamaCalisiyor = false;
                 break;
@@ -113,11 +96,6 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // ------------------- YENİ EKLENEN METOT -------------------
-
-    /**
-     * Eklenen personel tipine gore ilgili ekleme metodunu cagirir.
-     */
     private static void personelTipiSecimEkrani() {
         System.out.println(Formatlayici.renklendir("\n--- KISI EKLEME SECIMI ---", Formatlayici.MAVI));
         System.out.println("1. Futbolcu");
@@ -152,9 +130,8 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // ------------------- EKLEME METOTLARI -------------------
+    // --- EKLEME METOTLARI (CONSTRUCTORLAR DÜZELTİLDİ) ---
 
-    // Mevcut Futbolcu Ekleme Metodu
     private static void futbolcuEklemeEkrani() {
         System.out.println(Formatlayici.renklendir("\n--- FUTBOLCU EKLEME ---", Formatlayici.YESIL));
         System.out.print("Ad: ");
@@ -162,17 +139,15 @@ public class FutbolTakimiUygulama {
         System.out.print("Soyad: ");
         String soyad = scanner.nextLine().trim();
 
-        // YENİ EKLENEN KISIM: Mevki girişi
         System.out.println("\nMevki Secenekleri: FORVET, KANAT, ORTASAHA, DEFANS, KALECI");
         System.out.print("Mevki: ");
-        String mevki = scanner.nextLine().trim().toUpperCase(); // Büyük harfe çevirerek veri bütünlüğünü sağla
+        String mevki = scanner.nextLine().trim().toUpperCase();
 
-        // Örnek String Metot kullanımı: Adın sadece harf içerip içermediğini kontrol etme
-        for (int i = 0; i < ad.length(); i++) { // 9. Bolum: for döngüsü
-            if (!Character.isLetter(ad.charAt(i))) { // 2.2: charAt() metodu
+        for (int i = 0; i < ad.length(); i++) {
+            if (!Character.isLetter(ad.charAt(i))) {
                 System.out.println(Formatlayici.renklendir("HATA: Ad rakam içeriyor. Otomatik düzeltme yapılıyor...", Formatlayici.KIRMİZİ));
-                ad = ad.replace(String.valueOf(ad.charAt(i)), ""); // 2.2: replace() metodu
-                break; //
+                ad = ad.replace(String.valueOf(ad.charAt(i)), "");
+                break;
             }
         }
 
@@ -181,7 +156,6 @@ public class FutbolTakimiUygulama {
             int formaNo = scanner.nextInt();
             scanner.nextLine();
 
-            // GÜNCELLEME: Mevki bilgisini varsayılan "DEFANS" yerine kullanıcıdan alınan 'mevki' değişkeni ile atıyoruz.
             Futbolcu f = new Futbolcu(ad, soyad, LocalDate.now(), "TR" + formaNo, formaNo, mevki, 0, 0);
             service.futbolcuEkle(f);
 
@@ -197,13 +171,14 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // Yeni Teknik Direktor Ekleme Metodu
     private static void teknikDirektorEklemeEkrani() {
-        // BASİTLİK İÇİN ÖRNEK DEĞERLERLE ÇALIŞAN METOT
         try {
+            // 12 PARAMETRELİ CONSTRUCTOR ÇAĞRISI DÜZELTİLDİ
             TeknikDirektor td = new TeknikDirektor("Okan", "Buruk", LocalDate.of(1973, 10, 19), "TR1",
                     500000, LocalDate.of(2022, 6, 1),
-                    2005, "4-2-3-1", 100000);
+                    2005, "4-2-3-1", 100000,
+                    "B.B. Erzurumspor", 1.5, 5); // Yeni 3 parametre
+
             System.out.println(Formatlayici.renklendir(td.toString(), Formatlayici.YESIL));
             System.out.println(Formatlayici.renklendir("Teknik direktor (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
 
@@ -212,12 +187,14 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // Yeni Yardimci Antrenor Ekleme Metodu
     private static void yardimciAntrenorEklemeEkrani() {
         try {
+            // 14 PARAMETRELİ CONSTRUCTOR ÇAĞRISI DÜZELTİLDİ
             YardimciAntrenor ya = new YardimciAntrenor("Ismail", "Şenol", LocalDate.of(1985, 3, 10), "TR2",
                     200000, LocalDate.of(2023, 7, 1),
-                    "Hucum", 1000.5);
+                    "Hucum", 1000.5,
+                    18, 15, 17, 16, 19, 20); // Yeni 6 puan parametresi
+
             System.out.println(Formatlayici.renklendir(ya.toString(), Formatlayici.YESIL));
             System.out.println(Formatlayici.renklendir("Yardimci Antrenor (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
         } catch (Exception e) {
@@ -225,12 +202,14 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // Yeni Fizyoterapist Ekleme Metodu
     private static void fizyoterapistEklemeEkrani() {
         try {
+            // 13 PARAMETRELİ CONSTRUCTOR ÇAĞRISI DÜZELTİLDİ
             Fizyoterapist fizyo = new Fizyoterapist("Ali", "Can", LocalDate.of(1988, 1, 1), "TR3",
                     150000, LocalDate.of(2021, 5, 15),
-                    "SERT_001", "Ortopedi", true);
+                    "SERT_001", "Ortopedi", true,
+                    18, 15, 19, 17); // Yeni 4 puan parametresi
+
             System.out.println(Formatlayici.renklendir(fizyo.toString(), Formatlayici.YESIL));
             System.out.println(Formatlayici.renklendir("Fizyoterapist (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
         } catch (Exception e) {
@@ -238,11 +217,31 @@ public class FutbolTakimiUygulama {
         }
     }
 
-    // ------------------- YENİ METOT: PERFORMANS GÖRÜNTÜLEME -------------------
+    // ------------------- PERSONEL SİLME METODU (YENİ) -------------------
 
+    private static void personelSilmeEkrani() {
+        System.out.println(Formatlayici.renklendir("\n--- PERSONEL SILME (Ad/Soyad) ---", Formatlayici.KIRMİZİ));
+        System.out.print("Silinecek personelin Adi: ");
+        String ad = scanner.nextLine().trim();
+        System.out.print("Silinecek personelin Soyadi: ");
+        String soyad = scanner.nextLine().trim();
 
+        if (ad.isEmpty() || soyad.isEmpty()) {
+            System.err.println(Formatlayici.renklendir("HATA: Ad ve soyad boş birakilamaz.", Formatlayici.KIRMİZİ));
+            return;
+        }
 
+        // Not: TakimService.java dosyasında personelSil metodu doğru implemente edilmiş olmalıdır.
+        boolean basarili = service.personelSil(ad, soyad);
 
+        if (basarili) {
+            System.out.println(Formatlayici.renklendir(ad + " " + soyad + " isimli personel/futbolcu basariyla silindi.", Formatlayici.YESIL));
+        } else {
+            System.err.println(Formatlayici.renklendir("HATA: " + ad + " " + soyad + " isimli personel/futbolcu kadroda bulunamadi.", Formatlayici.KIRMİZİ));
+        }
+    }
+
+    // ------------------- KALAN METOTLAR -------------------
 
     private static void performansGoruntulemeEkrani() {
         System.out.println(Formatlayici.renklendir("\n--- PERFORMANS VERILERINI GÖRÜNTÜLE ---", Formatlayici.MAVI));
@@ -252,33 +251,25 @@ public class FutbolTakimiUygulama {
             int formaNo = scanner.nextInt();
             scanner.nextLine();
 
-            // 1. Forma No Geçerlilik Kontrolü
             if (formaNo < 1 || formaNo > 99) {
                 System.err.println(Formatlayici.renklendir("HATA: Forma numarasi 1 ile 99 arasinda olmalidir. Girilen: " + formaNo, Formatlayici.KIRMİZİ));
-                return; // Hatalıysa metottan çık
+                return;
             }
 
             Futbolcu f = service.futbolcuyuBul(formaNo);
 
-            // 2. Null Kontrolü ve Detayları Yazdırma
             if (f != null) {
-                // Futbolcu bulunduysa, performansı yazdır.
                 System.out.println(Formatlayici.renklendir("\n--- OYUNCU PERFORMANS DETAYI ---", Formatlayici.MAVI));
-                // f.getPerformansBilgileri() metodu (Futbolcu.java'ya eklediğimiz) burada kullanılır.
                 System.out.println(Formatlayici.renklendir(f.getPerformansBilgileri(), Formatlayici.YESIL));
             } else {
-                // Futbolcu bulunamadıysa, hata mesajını göster.
                 System.err.println(Formatlayici.renklendir("HATA: " + formaNo + " numaralı futbolcu kadroda bulunamadı.", Formatlayici.KIRMİZİ));
             }
 
         } catch (InputMismatchException e) {
-            // Sayı dışında bir giriş yapılırsa bu hatayı yakalar.
             System.err.println(Formatlayici.renklendir("HATA: Forma numarasi sayi olmalidir.", Formatlayici.KIRMİZİ));
-            scanner.nextLine(); // Yanlış girişi tüket
+            scanner.nextLine();
         }
     }
-
-    // ------------------- KALAN METOTLAR (GÖVDESİ DEĞİŞMEYENLER) -------------------
 
     private static void performansGuncellemeEkrani() {
 
@@ -287,16 +278,12 @@ public class FutbolTakimiUygulama {
         int formaNo = scanner.nextInt();
         scanner.nextLine();
 
-        // Yeni Kontrol: Futbolcuyu ara
         Futbolcu f = service.futbolcuyuBul(formaNo);
 
         if (f == null) {
-            // Futbolcu bulunamazsa hemen hata ver ve çık
             System.err.println(Formatlayici.renklendir("HATA: " + formaNo + " numaralı futbolcu kadroda bulunamadı. Guncelleme yapilamadi.", Formatlayici.KIRMİZİ));
-            return; // Metottan hemen çıkış
+            return;
         }
-
-        // Bu noktadan sonra futbolcu (f) nesnesi bulundu, performans verilerini sorabiliriz.
 
         System.out.print("Gol sayisini girin : ");
         String golGirdi = scanner.nextLine().trim();
@@ -304,7 +291,6 @@ public class FutbolTakimiUygulama {
         System.out.print(" Asist sayisini girin: ");
         String asistGirdi = scanner.nextLine().trim();
 
-        // 2.2: Zorunlu String metotlarini kullanma: substring, indexOf, equals
         if (golGirdi.substring(0, 1).equals("0") && asistGirdi.indexOf("0") == 0) {
             System.out.println(Formatlayici.renklendir("Uyari: Gol ve asist sifir olarak girildi.", Formatlayici.KIRMİZİ));
         }
@@ -313,9 +299,6 @@ public class FutbolTakimiUygulama {
             int gol = Integer.parseInt(golGirdi);
             int asist = Integer.parseInt(asistGirdi);
 
-            // Gerçek güncelleme mantığı Service'e devredildi
-            // Futbolcu nesnesi zaten yukarıda (f != null) kontrol edildiği için
-            // Service metodu burada her zaman true döndürmelidir.
             service.performansGuncelle(formaNo, gol, asist);
             System.out.println(Formatlayici.renklendir(formaNo + " numarali futbolcunun performansi basariyla guncellendi.", Formatlayici.YESIL));
 
@@ -325,12 +308,9 @@ public class FutbolTakimiUygulama {
     }
 
     private static void maasHesaplamaEkrani() {
-        // İçerik aynı kalacak
-        // ...
         try {
             System.out.println(Formatlayici.renklendir("\n--- MAAS HESAPLAMA ---", Formatlayici.MAVI));
 
-            // 9. Bolum: Tek Boyutlu Dizi Kullanimi
             String[] personelTipleri = {"TeknikDirektor", "YardimciAntrenor", "Fizyoterapist"};
             System.out.println("Personel Tipleri: ");
 
@@ -351,8 +331,6 @@ public class FutbolTakimiUygulama {
     }
 
     private static void dosyayaKaydetmeEkrani() {
-        // İçerik aynı kalacak
-        // ...
         try {
             DosyaIslemleri.raporuDosyayaYaz(service.getFutbolcuKadrosu());
         } catch (IOException e) {
