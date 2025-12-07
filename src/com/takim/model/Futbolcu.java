@@ -51,11 +51,33 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
             this.golSayisi = golSayisi;
         }
     }
-    // ... Diger Getter/Setter metodları
 
-    // 4.4: Override (3/5)
+    public String getMevki() { return mevki; }
+    public int getasistSayisi() { return asistSayisi; } // Mevcut küçük harfli getter
+    // ---
+
+    // DÜZELTME: Skor Katkısı Metotları (getter'lar kullanıldı)
+
+    /**
+     * Oyuncunun toplam skor katkısını (Gol + Asist) döndürür.
+     */
+    public int getSkorKatkisi() {
+        return getGolSayisi() + getasistSayisi();
+    }
+
+    /**
+     * Skor Katkısı sıralaması için istenen formatta bilgi döndürür.
+     * Format: Forma No | Ad Soyad (Katkı: X, Gol: Y, Asist: Z)
+     */
+    public String getSkorKatkisiBilgileri() {
+        return String.format("%d | %s %s (Katkı: %d, Gol: %d, Asist: %d)",
+                getFormaNo(), getAd(), getSoyad(), getSkorKatkisi(), getGolSayisi(), getasistSayisi());
+    }
+
+    // ---
+
     @Override
-    public String toString() {
+    public String toString() { // 4.4: Override (3/5)
         return "Futbolcu >> " + super.toString() +
                 ", Forma No: " + formaNo +
                 ", Mevki: " + mevki;
@@ -81,15 +103,6 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
     /**
      * Futbolcunun forma numarası ile performans verilerini görüntüler.
      */
-    public String getMevki() {
-        return mevki;
-    }
-    public int getgolSayisi() {
-        return golSayisi;
-    }
-    public int getasistSayisi() {
-        return asistSayisi;
-    }
     public String getPerformansBilgileri() {
         // getAd() ve getSoyad() metotları Kisi sınıfından miras alınmıştır.
         return getAd() + " " + getSoyad() +

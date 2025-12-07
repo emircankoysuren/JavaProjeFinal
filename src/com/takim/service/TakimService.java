@@ -18,13 +18,38 @@ public class TakimService {
     private Map<LocalDate,MacVerisi> macGecmisi;
     private static final int MAX_KADRO_LIMITI = 28;
 
+    // >>> YENİ: ID Sayaçları <<<
+    private static int yardimciAntrenorSayaci = 0;
+    private static int fizyoterapistSayaci = 0;
+
     public TakimService() {
         this.futbolcuKadrosu = new ArrayList<>();
         this.kisiListesi = new ArrayList<>();
         this.formaNoHaritasi = new HashMap<>();
         this.macGecmisi = new TreeMap<>();
         orneKVeriYukle();
+
+        // YENİ: Veri yüklendikten sonra sayaçları ayarla
+        updatePersonelSayaclari();
     }
+
+    // >>> YENİ: ID Üretim Metotları <<<
+    /**
+     * Yardimci Antrenor için YANT001, YANT002... şeklinde benzersiz ID üretir.
+     */
+    public String generateYardimciAntrenorId() {
+        yardimciAntrenorSayaci++;
+        return String.format("YANT%03d", yardimciAntrenorSayaci);
+    }
+
+    /**
+     * Fizyoterapist için FİZY001, FİZY002... şeklinde benzersiz ID üretir.
+     */
+    public String generateFizyoterapistId() {
+        fizyoterapistSayaci++;
+        return String.format("FİZY%03d", fizyoterapistSayaci);
+    }
+    // <<< ID Üretim Metotları Sonu >>>
 
     public void futbolcuEkle(Futbolcu futbolcu) throws KapasiteDolduException {
         try {
@@ -40,25 +65,36 @@ public class TakimService {
     }
 
     /**
-     * Ad ve soyad ile personel siler (büyük/küçük harf duyarsız).
+     * Ad ve soyad ile personel siler (büyük/küçük harf duyarsız). (Eski metot, uyumluluk için tutulur)
      */
     public boolean personelSil(String ad, String soyad) {
         Iterator<Kisi> iterator = kisiListesi.iterator();
         while (iterator.hasNext()) {
             Kisi kisi = iterator.next();
             if (kisi.getAd().equalsIgnoreCase(ad) && kisi.getSoyad().equalsIgnoreCase(soyad)) {
-
-                if (kisi instanceof Futbolcu f) {
-                    futbolcuKadrosu.remove(f);
-                    formaNoHaritasi.remove(f.getFormaNo());
-                }
-
-                iterator.remove();
-                return true;
+                return kisiSil(kisi); // Yeni kisiSil metodunu çağırır.
             }
         }
         return false;
     }
+
+    // >>> YENİ: Tek bir kişi nesnesini tüm listelerden silen metot <<<
+    /**
+     * Kisi listesinden verilen Kisi nesnesini siler.
+     */
+    public boolean kisiSil(Kisi kisi) {
+        if (kisi == null) return false;
+
+        // Futbolcu ise ek listelerden de sil
+        if (kisi instanceof Futbolcu f) {
+            futbolcuKadrosu.remove(f);
+            formaNoHaritasi.remove(f.getFormaNo());
+        }
+
+        // Ana listeden sil
+        return kisiListesi.remove(kisi);
+    }
+    // <<< kisiSil Metodu Sonu >>>
 
 
     public boolean performansGuncelle(int formaNo, int gol, int asist) {
@@ -74,18 +110,96 @@ public class TakimService {
         return formaNoHaritasi.get(formaNo);
     }
 
+    // >>> YENİ: ID/Role Göre Arama Metotları <<<
+    // Teknik Direktör'ü döndüren metot
+    public TeknikDirektor getTeknikDirektor() {
+        for (Kisi k : kisiListesi) {
+            if (k instanceof TeknikDirektor) {
+                return (TeknikDirektor) k;
+            }
+        }
+        return null;
+    }
+
+    // ID'ye göre Yardımcı Antrenör'ü döndüren metot
+    public YardimciAntrenor yardimciAntrenoruBul(String id) {
+        for (Kisi k : kisiListesi) {
+            // Büyük/küçük harf duyarsız ve boşluksuz karşılaştırma
+            if (k instanceof YardimciAntrenor && k.getTcKimlikNo().trim().equalsIgnoreCase(id.trim())) {
+                return (YardimciAntrenor) k;
+            }
+        }
+        return null;
+    }
+
+    // ID'ye göre Fizyoterapist'i döndüren metot
+    public Fizyoterapist fizyoterapistBul(String id) {
+        for (Kisi k : kisiListesi) {
+            // Büyük/küçük harf duyarsız ve boşluksuz karşılaştırma
+            if (k instanceof Fizyoterapist && k.getTcKimlikNo().trim().equalsIgnoreCase(id.trim())) {
+                return (Fizyoterapist) k;
+            }
+        }
+        return null;
+    }
+    // <<< Arama Metotları Sonu >>>
+
     public <T extends Kisi> void listeYazdir(List<T> liste) {
         for (T eleman : liste) {
             eleman.bilgiYazdir();
         }
     }
 
-    public void golSiralamasiYap() {
-        Collections.sort(futbolcuKadrosu, (f1, f2) -> f2.getGolSayisi() - f1.getGolSayisi());
+    public void skorKatkisiSiralamasiYap() {
+        // Skor katkısına (Gol + Asist) göre azalan sırada sıralar.
+        Collections.sort(futbolcuKadrosu, (f1, f2) -> f2.getSkorKatkisi() - f1.getSkorKatkisi());
     }
 
     public List<Futbolcu> getFutbolcuKadrosu() { return futbolcuKadrosu; }
     public List<Kisi> getKisiListesi() { return kisiListesi; } // Tüm personel listesini döndürür
+
+    // >>> YENİ: Sayaç Güncelleme Metodu (Kalıcılık Desteği) <<<
+    private void updatePersonelSayaclari() {
+        int maxYa = 0;
+        int maxFizyo = 0;
+
+        for (Kisi k : kisiListesi) {
+            String tcNo = k.getTcKimlikNo();
+            if (tcNo == null) continue;
+
+            // Yardımcı Antrenör ID'sini kontrol et (TRA99, YANT001 gibi formatları desteklemek için)
+            if (k instanceof YardimciAntrenor) {
+                try {
+                    // Sadece sayısal kısmı alıp en büyük sayıyı buluruz
+                    String numPart = tcNo.replaceAll("[^0-9]", "");
+                    if (!numPart.isEmpty()) {
+                        int id = Integer.parseInt(numPart);
+                        if (id > maxYa) {
+                            maxYa = id;
+                        }
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+
+            // Fizyoterapist ID'sini kontrol et (TRF99, FİZY001 gibi formatları desteklemek için)
+            else if (k instanceof Fizyoterapist) {
+                try {
+                    String numPart = tcNo.replaceAll("[^0-9]", "");
+                    if (!numPart.isEmpty()) {
+                        int id = Integer.parseInt(numPart);
+                        if (id > maxFizyo) {
+                            maxFizyo = id;
+                        }
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        // Sayaçları bulunan maksimum değerlere ayarla
+        yardimciAntrenorSayaci = maxYa;
+        fizyoterapistSayaci = maxFizyo;
+    }
+    // <<< Sayaç Güncelleme Metodu Sonu >>>
+
 
     private void orneKVeriYukle() {
         // KRİTİK DÜZELTME: Tüm personeli tek bir dosyadan yükleriz.

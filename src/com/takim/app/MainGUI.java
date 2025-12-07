@@ -335,8 +335,9 @@ public class MainGUI extends Application {
     }
 
     private void handleSortGoals() {
-        showMessage("Gol siralamasi yapildi. Sonuçlar konsola yazdırıldı.", Formatlayici.MAVI);
-        service.golSiralamasiYap();
+        showMessage("Skor Katkisi siralamasi yapildi. Sonuçlar konsola yazdırıldı.", Formatlayici.MAVI);
+        // HATA DÜZELTME: golSiralamasiYap -> skorKatkisiSiralamasiYap
+        service.skorKatkisiSiralamasiYap();
         service.listeYazdir(service.getFutbolcuKadrosu());
     }
 
