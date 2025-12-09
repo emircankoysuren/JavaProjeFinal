@@ -110,7 +110,7 @@ public class DosyaIslemleri {
             sb.append(f.getFormaNo()).append(AYIRICI);
             sb.append(f.getMevki()).append(AYIRICI);
             sb.append(f.getGolSayisi()).append(AYIRICI);
-            sb.append(f.getasistSayisi());
+            sb.append(f.getAsistSayisi());
         } else if (kisi instanceof Calisan c) {
             // Calisan Alanları
             sb.append(c.getMaas()).append(AYIRICI);

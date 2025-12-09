@@ -3,12 +3,16 @@ package com.takim.model;
 import java.time.LocalDate;
 import java.time.Month;
 
+/**
+ * 1.1: Alt Sinif (3/4). Calisan hiyerarsisi.
+ * Hata Düzeltme: Kayıp getter metotları geri eklendi.
+ */
 public class Fizyoterapist extends Calisan {
 
     private String sertifikaNo;
     private String uzmanlikAlani;
     private boolean sporMasajYetkisi;
-    private short tecrubeYili;
+    private short tecrubeYili; // 2.1: short primitive tipi
 
     private int fizyoterapiPuani;
     private int sporBilimiPuani;
@@ -40,14 +44,14 @@ public class Fizyoterapist extends Calisan {
         setDisiplinPuani(disiplinPuani);
     }
 
-    public short getTecrubeYili() {
-        return tecrubeYili;
-    }
-
-    // EKSİK GETTER/SETTER'LAR BURAYA EKLENDİ (DosyaIslemleri için kritik)
+    // EKSİK GETTER METOTLARI GERİ EKLENDİ (Hata kaynağı)
     public String getSertifikaNo() { return sertifikaNo; }
     public String getUzmanlikAlani() { return uzmanlikAlani; }
     public boolean isSporMasajYetkisi() { return sporMasajYetkisi; }
+    public short getTecrubeYili() { return tecrubeYili; }
+
+
+    // YENİ PUAN GETTER/SETTER METOTLARI
     public int getFizyoterapiPuani() { return fizyoterapiPuani; }
     public void setFizyoterapiPuani(int fizyoterapiPuani) { this.fizyoterapiPuani = checkPuanRange(fizyoterapiPuani, "Fizyoterapi"); }
     public int getSporBilimiPuani() { return sporBilimiPuani; }

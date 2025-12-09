@@ -26,7 +26,6 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
 
     // 3.5: Constructor Overloading (2. form)
     public Futbolcu(String ad, String soyad, int formaNo, String mevki) {
-        // Exception yonetimi olmadigi icin dogrudan set etme
         super(ad, soyad, null, null);
         this.formaNo = formaNo;
         this.mevki = mevki;
@@ -42,6 +41,7 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
         this.formaNo = formaNo;
     }
 
+    // DÜZELTİLDİ: Standart get/set metotları (Büyük harfle başlar)
     public int getGolSayisi() { return golSayisi; }
     public void setGolSayisi(int golSayisi) { // 3.8: Aralık kontrolü (2/5)
         if (golSayisi < 0) {
@@ -51,33 +51,37 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
             this.golSayisi = golSayisi;
         }
     }
-
+    public int getAsistSayisi() { return asistSayisi; } // <-- Bu doğru metot adı
+    public void setAsistSayisi(int asistSayisi) {
+        if (asistSayisi < 0) {
+            System.err.println("Hata: Asist sayisi negatif olamaz. Deger 0'a ayarlandi.");
+            this.asistSayisi = 0;
+        } else {
+            this.asistSayisi = asistSayisi;
+        }
+    }
     public String getMevki() { return mevki; }
-    public int getasistSayisi() { return asistSayisi; } // Mevcut küçük harfli getter
-    // ---
+    public void setMevki(String mevki) { this.mevki = mevki; }
 
-    // DÜZELTME: Skor Katkısı Metotları (getter'lar kullanıldı)
 
-    /**
-     * Oyuncunun toplam skor katkısını (Gol + Asist) döndürür.
-     */
-    public int getSkorKatkisi() {
-        return getGolSayisi() + getasistSayisi();
+    // YENİ METOT: Skor Katkısı Hesaplama
+    public int skorKatkisiHesapla() {
+        return golSayisi + asistSayisi;
     }
 
     /**
-     * Skor Katkısı sıralaması için istenen formatta bilgi döndürür.
-     * Format: Forma No | Ad Soyad (Katkı: X, Gol: Y, Asist: Z)
+     * Skor Katkısı Detayını istenen formatta döndürür.
      */
-    public String getSkorKatkisiBilgileri() {
-        return String.format("%d | %s %s (Katkı: %d, Gol: %d, Asist: %d)",
-                getFormaNo(), getAd(), getSoyad(), getSkorKatkisi(), getGolSayisi(), getasistSayisi());
+    public String getSkorKatkisiDetay() {
+        return "Forma No: " + formaNo +
+                " | Adı Soyadı: " + getAd() + " " + getSoyad() +
+                " | Skor Katkısı: " + skorKatkisiHesapla() + " (Gol: " + golSayisi + ", Asist: " + asistSayisi + ")";
     }
 
-    // ---
 
+    // 4.4: Override (3/5)
     @Override
-    public String toString() { // 4.4: Override (3/5)
+    public String toString() {
         return "Futbolcu >> " + super.toString() +
                 ", Forma No: " + formaNo +
                 ", Mevki: " + mevki;
@@ -104,7 +108,6 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
      * Futbolcunun forma numarası ile performans verilerini görüntüler.
      */
     public String getPerformansBilgileri() {
-        // getAd() ve getSoyad() metotları Kisi sınıfından miras alınmıştır.
         return getAd() + " " + getSoyad() +
                 " (" + mevki + ") | Forma No: " + formaNo +
                 " | Gol: " + golSayisi +
