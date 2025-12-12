@@ -1,140 +1,140 @@
 package com.takim.service;
 
-import com.takim.exception.KapasiteDolduException;
 import com.takim.model.*;
-import java.util.*;
-import java.time.LocalDate;
+import com.takim.exception.GecersizFormaNoException;
 import com.takim.util.DosyaIslemleri;
 import com.takim.util.Formatlayici;
 
-/**
- * Takim verilerini yonetir, is mantigini uygular ve koleksiyonlari tutar.
- */
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.*;
+
 public class TakimService {
 
-    private List<Futbolcu> futbolcuKadrosu; // 5.2: List referansi
-    private Map<Integer, Futbolcu> formaNoHaritasi; // 5.2: Map referansi
-    private Map<LocalDate,MacVerisi> macGecmisi; // 5.2: TreeMap kullanilabilir
-    private List<Kisi> kisiListesi; // YENİ: Tüm personeli tutar (Futbolcu ve diğerleri)
-    private static final int MAX_KADRO_LIMITI = 28;
+    private List<Futbolcu> futbolcuKadrosu;
+    private List<TeknikDirektor> teknikDirektorler;
+    private List<YardimciAntrenor> yardimciAntrenorler;
+    private List<Fizyoterapist> fizyoterapistler;
+
+    private Map<Integer, Futbolcu> formaNoHaritasi;
+    private Map<LocalDate,MacVerisi> macGecmisi;
+
+    private static final String FUTBOLCU_DOSYA = "futbolcular.txt";
+    private static final String TEKNIK_DIREKTOR_DOSYA = "teknikdirektorler.txt";
+    private static final String YARDIMCI_ANTRENOR_DOSYA = "yardimciantrenorler.txt";
+    private static final String FIZYOTERAPIST_DOSYA = "fizyoterapistler.txt";
 
     public TakimService() {
-        this.futbolcuKadrosu = new ArrayList<>(); // 5.2: ArrayList
-        this.formaNoHaritasi = new HashMap<>(); // 5.2: HashMap
-        this.macGecmisi = new TreeMap<>(); // 5.2: TreeMap
-        this.kisiListesi = new ArrayList<>(); // YENİ: Başlatma
-        orneKVeriYukle();
+        futbolcuKadrosu = new ArrayList<>();
+        teknikDirektorler = new ArrayList<>();
+        yardimciAntrenorler = new ArrayList<>();
+        fizyoterapistler = new ArrayList<>();
+        formaNoHaritasi = new HashMap<>();
+        macGecmisi = new TreeMap<>();
+
+        tumVerileriYukle();
+        futbolcuKadrosu.forEach(f -> formaNoHaritasi.put(f.getFormaNo(), f));
     }
 
-    public void futbolcuEkle(Futbolcu futbolcu) throws KapasiteDolduException {
-        // 7. Bolum: try-catch blogu (3/5)
-        try {
-            if (futbolcuKadrosu.size() >= MAX_KADRO_LIMITI) {
-                throw new KapasiteDolduException("Kadro Limiti asildi.");
-            }
-            futbolcuKadrosu.add(futbolcu);
-            formaNoHaritasi.put(futbolcu.getFormaNo(), futbolcu); // 5.2: Ekleme
-            kisiListesi.add(futbolcu); // YENİ: Genel listeye ekle
-        } catch (KapasiteDolduException e) {
-            System.err.println("HATA: " + e.getMessage());
+    public void futbolcuEkle(Futbolcu futbolcu) throws GecersizFormaNoException {
+        if (futbolcu.getFormaNo() < 1 || futbolcu.getFormaNo() > 99) {
+            throw new GecersizFormaNoException("Forma numarası 1-99 arasında olmalıdır.");
         }
+        futbolcuKadrosu.add(futbolcu);
+        formaNoHaritasi.put(futbolcu.getFormaNo(), futbolcu);
+        tumVerileriKaydet();
     }
 
-    /**
-     * YENİ METOT: Skor Katkısı (Gol + Asist) üzerinden sıralama yapar.
-     */
-    public void skorKatkisiSiralamasiYap() {
-        // Futbolcu kadrosunu skor katkısına göre büyükten küçüğe sıralar.
-        Collections.sort(futbolcuKadrosu, (f1, f2) -> f2.skorKatkisiHesapla() - f1.skorKatkisiHesapla());
+    public void teknikDirektorEkle(TeknikDirektor td) {
+        teknikDirektorler.add(td);
+        tumVerileriKaydet();
     }
 
-    /**
-     * YENİ METOT: Ad ve soyad ile personel siler (büyük/küçük harf duyarsız).
-     * @param ad Silinecek kişinin adı.
-     * @param soyad Silinecek kişinin soyadı.
-     * @return Silme işlemi başarılıysa true, kişi bulunamazsa false.
-     */
+    public void yardimciAntrenorEkle(YardimciAntrenor ya) {
+        yardimciAntrenorler.add(ya);
+        tumVerileriKaydet();
+    }
+
+    public void fizyoterapistEkle(Fizyoterapist fizyo) {
+        fizyoterapistler.add(fizyo);
+        tumVerileriKaydet();
+    }
+
+    public List<Futbolcu> getFutbolcuKadrosu() { return futbolcuKadrosu; }
+    public List<TeknikDirektor> getTeknikDirektorler() { return teknikDirektorler; }
+    public List<YardimciAntrenor> getYardimciAntrenorler() { return yardimciAntrenorler; }
+    public List<Fizyoterapist> getFizyoterapistler() { return fizyoterapistler; }
+
     public boolean personelSil(String ad, String soyad) {
-        for (int i = 0; i < kisiListesi.size(); i++) {
-            Kisi kisi = kisiListesi.get(i);
-            // String metotlari kullanimi: equalsIgnoreCase()
-            if (kisi.getAd().equalsIgnoreCase(ad) && kisi.getSoyad().equalsIgnoreCase(soyad)) {
+        boolean silindi = false;
+        silindi |= futbolcuKadrosu.removeIf(f -> f.getAd().equalsIgnoreCase(ad) && f.getSoyad().equalsIgnoreCase(soyad));
+        silindi |= teknikDirektorler.removeIf(t -> t.getAd().equalsIgnoreCase(ad) && t.getSoyad().equalsIgnoreCase(soyad));
+        silindi |= yardimciAntrenorler.removeIf(y -> y.getAd().equalsIgnoreCase(ad) && y.getSoyad().equalsIgnoreCase(soyad));
+        silindi |= fizyoterapistler.removeIf(f -> f.getAd().equalsIgnoreCase(ad) && f.getSoyad().equalsIgnoreCase(soyad));
 
-                if (kisi instanceof Futbolcu f) {
-                    // Eğer futbolcu ise, futbolcuya özgü koleksiyonlardan da silinmeli
-                    futbolcuKadrosu.remove(f);
-                    formaNoHaritasi.remove(f.getFormaNo());
-                }
-
-                // Genel listeden sil
-                kisiListesi.remove(i);
-                return true; // Başarılı
-            }
-        }
-        return false; // Bulunamadı
+        if(silindi) tumVerileriKaydet();
+        return silindi;
     }
 
+    public Futbolcu futbolcuyuBul(int formaNo) {
+        return formaNoHaritasi.get(formaNo);
+    }
 
-    /**
-     * Futbolcunun performans verilerini günceller. (Menü 2 için)
-     * @param formaNo Güncellenecek futbolcunun forma numarası.
-     * @param gol Eklenecek gol sayısı.
-     * @param asist Eklenecek asist sayısı.
-     * @return Güncelleme başarılıysa true, futbolcu bulunamazsa false.
-     */
     public boolean performansGuncelle(int formaNo, int gol, int asist) {
         Futbolcu f = futbolcuyuBul(formaNo);
         if (f != null) {
-            // Futbolcu modelindeki Metot Overloading kullanılır.
             f.performansGuncelle(gol, asist);
+            tumVerileriKaydet();
             return true;
         }
         return false;
     }
 
-    /**
-     * Forma numarasıyla futbolcuyu bulma metodu.
-     */
-    public Futbolcu futbolcuyuBul(int formaNo) {
-        return formaNoHaritasi.get(formaNo);
+    // DÜZELTİLEN METOT: Jenerik tip hatası giderildi.
+    public String listeYazdir(List<? extends Kisi> liste) {
+        if (liste == null || liste.isEmpty()) {
+            return "Liste boş.";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Kisi kisi : liste) {
+            if (kisi != null) {
+                sb.append(kisi.toString()).append("\n");
+            }
+        }
+        return sb.toString();
     }
 
+    public void skorKatkisiSiralamasiYap() {
+        Collections.sort(futbolcuKadrosu, Comparator.comparingInt(Futbolcu::skorKatkisiHesapla).reversed());
+    }
 
+    public String skorKatkisiRaporuGetir() {
+        skorKatkisiSiralamasiYap();
+        StringBuilder sb = new StringBuilder();
+        sb.append(Formatlayici.renklendir("--- SKOR KATKISI SIRALAMASI ---\n", Formatlayici.YESIL));
+        futbolcuKadrosu.forEach(f -> sb.append(f.getSkorKatkisiDetay()).append("\n"));
+        return sb.toString();
+    }
 
-
-    // 5.1: Generic metot (1/2)
-    public <T extends Kisi> void listeYazdir(List<T> liste) {
-        for (T eleman : liste) { // 9. Bolum: for-each dongusu
-            eleman.bilgiYazdir();
+    public void tumVerileriKaydet() {
+        try {
+            DosyaIslemleri.dosyayaYaz((List)futbolcuKadrosu, FUTBOLCU_DOSYA);
+            DosyaIslemleri.dosyayaYaz((List)teknikDirektorler, TEKNIK_DIREKTOR_DOSYA);
+            DosyaIslemleri.dosyayaYaz((List)yardimciAntrenorler, YARDIMCI_ANTRENOR_DOSYA);
+            DosyaIslemleri.dosyayaYaz((List)fizyoterapistler, FIZYOTERAPIST_DOSYA);
+        } catch (IOException e) {
+            System.err.println("Kayit hatasi: " + e.getMessage());
         }
     }
 
-    // ... Getter metodları
-    public List<Futbolcu> getFutbolcuKadrosu() { return futbolcuKadrosu; }
-
-    public List<Kisi> getKisiListesi() { return kisiListesi; } // YENİ: Getter
-
-    private void orneKVeriYukle() {
-
-        // Dosyadan kayıtlı verileri yüklemeyi dene
-        List<Futbolcu> yuklenenKadro = DosyaIslemleri.kadroVerileriniYukle();
-
-        if (!yuklenenKadro.isEmpty()) {
-            // Kayıtlı veri bulunduysa, mevcut listeye ekle ve HashMap'i doldur
-            for (Futbolcu f : yuklenenKadro) {
-                futbolcuKadrosu.add(f);
-                formaNoHaritasi.put(f.getFormaNo(), f);
-                kisiListesi.add(f); // YENİ: Yüklenen futbolcuları genel listeye de ekle
-            }
-        } else {
-            // Kayıtlı veri yoksa, ilk başlangıç için örnek verileri elle ekle (opsiyonel)
-            System.out.println(Formatlayici.renklendir("Kayitli veri bulunamadi, ornek kadro oluşturuluyor...", Formatlayici.MAVI));
-            try {
-                Futbolcu f1 = new Futbolcu("Mauro", "Icardi", LocalDate.of(1993, 2, 19), "TC1", 9, "FORVET", 15, 5);
-                futbolcuEkle(f1);
-            } catch (Exception e) {
-                System.err.println("Ornek veri yuklenirken hata olustu.");
-            }
+    public void tumVerileriYukle() {
+        try {
+            futbolcuKadrosu = DosyaIslemleri.dosyadanOku(FUTBOLCU_DOSYA, Futbolcu.class);
+            teknikDirektorler = DosyaIslemleri.dosyadanOku(TEKNIK_DIREKTOR_DOSYA, TeknikDirektor.class);
+            yardimciAntrenorler = DosyaIslemleri.dosyadanOku(YARDIMCI_ANTRENOR_DOSYA, YardimciAntrenor.class);
+            fizyoterapistler = DosyaIslemleri.dosyadanOku(FIZYOTERAPIST_DOSYA, Fizyoterapist.class);
+        } catch (Exception e) {
+            System.err.println("Veri yukleme hatasi (ilk calisma olabilir): " + e.getMessage());
         }
     }
 }

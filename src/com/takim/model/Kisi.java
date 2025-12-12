@@ -1,18 +1,24 @@
 package com.takim.model;
 
+import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.Period;
 
 /**
- * 4.2: Abstract Sınıf (1/2). Tum insan varliklari icin temel sinif.
+ * 1.1: Ust Sinif (Base Class).
+ * KRİTİK DÜZELTME: Verilerin kaybolmaması için Serializable eklendi.
  */
-public abstract class Kisi {
+public abstract class Kisi implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String ad;
     private String soyad;
-    private LocalDate dogumTarihi; // 6: LocalDate kullanimi
+    private LocalDate dogumTarihi;
     private String tcKimlikNo;
+    private double maas;
+    private LocalDate iseBaslamaTarihi;
 
+    // Constructor 1
     public Kisi(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo) {
         this.ad = ad;
         this.soyad = soyad;
@@ -20,29 +26,30 @@ public abstract class Kisi {
         this.tcKimlikNo = tcKimlikNo;
     }
 
-    // Yalnızca alt sınıflar için basit constructor
-    public Kisi() {}
-
-    // 4.2: Somut metot (1/2)
-    public int yasHesapla() {
-        if (dogumTarihi == null) return 0;
-        return Period.between(dogumTarihi, LocalDate.now()).getYears();
+    // Constructor 2
+    public Kisi(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo, double maas, LocalDate iseBaslamaTarihi) {
+        this(ad, soyad, dogumTarihi, tcKimlikNo);
+        this.maas = maas;
+        this.iseBaslamaTarihi = iseBaslamaTarihi;
     }
 
-    public abstract void bilgiYazdir(); // 4.2: Abstract metot (1/2)
+    // Abstract metod
+    public abstract void bilgiYazdir();
 
-    // Getter/Setter metodlari
+    public int hizmetYiliHesapla() {
+        if (iseBaslamaTarihi == null) return 0;
+        return LocalDate.now().getYear() - iseBaslamaTarihi.getYear();
+    }
+
+    // Getter ve Setterlar
     public String getAd() { return ad; }
-    public void setAd(String ad) { this.ad = ad; }
     public String getSoyad() { return soyad; }
-    public void setSoyad(String soyad) { this.soyad = soyad; }
     public LocalDate getDogumTarihi() { return dogumTarihi; }
-    public void setDogumTarihi(LocalDate dogumTarihi) { this.dogumTarihi = dogumTarihi; }
     public String getTcKimlikNo() { return tcKimlikNo; }
-    public void setTcKimlikNo(String tcKimlikNo) { this.tcKimlikNo = tcKimlikNo; }
+    public double getMaas() { return maas; }
 
     @Override
-    public String toString() { // 4.4: Override (1/5)
+    public String toString() {
         return "Ad: " + ad + ", Soyad: " + soyad + ", Dogum Tarihi: " + dogumTarihi;
     }
 }

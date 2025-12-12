@@ -1,18 +1,20 @@
 package com.takim.model;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Month;
 
 /**
  * 1.1: Alt Sinif (3/4). Calisan hiyerarsisi.
- * Hata Düzeltme: Kayıp getter metotları geri eklendi.
+ * Serileştirme için Serializable uygulandı.
  */
-public class Fizyoterapist extends Calisan {
+public class Fizyoterapist extends Calisan implements Serializable {
 
+    private static final long serialVersionUID = 1L; // Serileştirme ID'si
     private String sertifikaNo;
     private String uzmanlikAlani;
     private boolean sporMasajYetkisi;
-    private short tecrubeYili; // 2.1: short primitive tipi
+    private short tecrubeYili;
 
     private int fizyoterapiPuani;
     private int sporBilimiPuani;
@@ -44,7 +46,7 @@ public class Fizyoterapist extends Calisan {
         setDisiplinPuani(disiplinPuani);
     }
 
-    // EKSİK GETTER METOTLARI GERİ EKLENDİ (Hata kaynağı)
+    // GEREKLİ GETTER METOTLARI
     public String getSertifikaNo() { return sertifikaNo; }
     public String getUzmanlikAlani() { return uzmanlikAlani; }
     public boolean isSporMasajYetkisi() { return sporMasajYetkisi; }
@@ -72,10 +74,17 @@ public class Fizyoterapist extends Calisan {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + " >> " +
-                super.toString() +
+        return "Fizyoterapist >> " + super.toString() +
                 ", Sertifika: " + sertifikaNo +
                 ", Fizyo Puanı: " + fizyoterapiPuani +
                 ", Uyumluluk: " + uyumlulukPuani;
+    }
+
+    // Listeleme için formatlı dize döndüren metot
+    public String bilgiGetir() {
+        return String.format("%-25s | Uzm. Alan: %-15s | Fizyo Puanı: %2d",
+                getAd() + " " + getSoyad(),
+                getUzmanlikAlani(),
+                getFizyoterapiPuani());
     }
 }

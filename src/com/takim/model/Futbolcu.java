@@ -1,30 +1,30 @@
 package com.takim.model;
 
 import com.takim.exception.GecersizFormaNoException;
+import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
  * 4.1: Ikinci kalitim zinciri tamamlandi (Kisi -> Futbolcu)
- * 4.3: Hem Kisi'den kalitim aliyor hem de Raporlanabilir interface'ini uyguluyor
+ * Serileştirme için Serializable uygulandı.
  */
-public class Futbolcu extends Kisi implements Raporlanabilir {
+public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
 
+    private static final long serialVersionUID = 1L; // Serileştirme ID'si
     private int formaNo;
     private String mevki;
     private int golSayisi;
     private int asistSayisi;
 
-    // 3.5: Constructor Overloading (1. sinif)
     public Futbolcu(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                     int formaNo, String mevki, int golSayisi, int asistSayisi) throws GecersizFormaNoException {
         super(ad, soyad, dogumTarihi, tcKimlikNo);
-        setFormaNo(formaNo); // Setter ile kontrol
+        setFormaNo(formaNo);
         this.mevki = mevki;
         this.golSayisi = golSayisi;
         this.asistSayisi = asistSayisi;
     }
 
-    // 3.5: Constructor Overloading (2. form)
     public Futbolcu(String ad, String soyad, int formaNo, String mevki) {
         super(ad, soyad, null, null);
         this.formaNo = formaNo;
@@ -34,16 +34,15 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
     }
 
     public int getFormaNo() { return formaNo; }
-    public void setFormaNo(int formaNo) throws GecersizFormaNoException { // 3.9: Ozel Exception firlatma (1/5)
+    public void setFormaNo(int formaNo) throws GecersizFormaNoException {
         if (formaNo < 1 || formaNo > 99) {
             throw new GecersizFormaNoException("Hata: Forma numarasi 1 ile 99 arasinda olmalidir. Girilen: " + formaNo);
         }
         this.formaNo = formaNo;
     }
 
-    // DÜZELTİLDİ: Standart get/set metotları (Büyük harfle başlar)
     public int getGolSayisi() { return golSayisi; }
-    public void setGolSayisi(int golSayisi) { // 3.8: Aralık kontrolü (2/5)
+    public void setGolSayisi(int golSayisi) {
         if (golSayisi < 0) {
             System.err.println("Hata: Gol sayisi negatif olamaz. Deger 0'a ayarlandi.");
             this.golSayisi = 0;
@@ -51,7 +50,7 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
             this.golSayisi = golSayisi;
         }
     }
-    public int getAsistSayisi() { return asistSayisi; } // <-- Bu doğru metot adı
+    public int getAsistSayisi() { return asistSayisi; }
     public void setAsistSayisi(int asistSayisi) {
         if (asistSayisi < 0) {
             System.err.println("Hata: Asist sayisi negatif olamaz. Deger 0'a ayarlandi.");
@@ -64,14 +63,10 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
     public void setMevki(String mevki) { this.mevki = mevki; }
 
 
-    // YENİ METOT: Skor Katkısı Hesaplama
     public int skorKatkisiHesapla() {
         return golSayisi + asistSayisi;
     }
 
-    /**
-     * Skor Katkısı Detayını istenen formatta döndürür.
-     */
     public String getSkorKatkisiDetay() {
         return "Forma No: " + formaNo +
                 " | Adı Soyadı: " + getAd() + " " + getSoyad() +
@@ -79,7 +74,6 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
     }
 
 
-    // 4.4: Override (3/5)
     @Override
     public String toString() {
         return "Futbolcu >> " + super.toString() +
@@ -87,22 +81,28 @@ public class Futbolcu extends Kisi implements Raporlanabilir {
                 ", Mevki: " + mevki;
     }
 
-    // 4.4: Metot Overloading (1/3)
+    // toString'i baz alarak, listeleme için temiz bilgi döndüren metot.
+    public String bilgiGetir() {
+        return String.format("%-10s | %-15s | Gol: %2d | Asist: %2d",
+                getFormaNo(),
+                getAd() + " " + getSoyad(),
+                getGolSayisi(),
+                getAsistSayisi());
+    }
+
     public void performansGuncelle(int gol, int asist) {
         this.golSayisi += gol;
         this.asistSayisi += asist;
     }
 
-    // 4.4: Metot Overloading (2/3)
     public void performansGuncelle(int gol) {
         this.golSayisi += gol;
     }
 
-    // Raporlanabilir implementasyonu
     @Override public String ozetRaporOlustur() { return this.toString(); }
     @Override public String detayliIstatistikGetir(LocalDate baslangic, LocalDate bitis) { return "Detaylı rapor."; }
     @Override public boolean raporDurumuKontrolEt() { return true; }
-    @Override public void bilgiYazdir() { System.out.println(this.toString()); } // Kisi abstract metot implementasyonu
+    @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     /**
      * Futbolcunun forma numarası ile performans verilerini görüntüler.

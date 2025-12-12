@@ -17,6 +17,7 @@ import java.util.ArrayList;
 /**
  * 1.1: Ana sinif (main metodu iceren, projeyi baslatan sinif).
  * 11. Bolum: Konsol menulu arayuzu ve donguyu yonetir.
+ * Hata Düzeltme: Dosya kaydetme çağrısı Service metoduyla değiştirildi.
  */
 public class FutbolTakimiUygulama {
 
@@ -62,7 +63,7 @@ public class FutbolTakimiUygulama {
         System.out.println("2. Performans Verisi Gir (Gol/Asist)");
         System.out.println("3. Performans Verilerini Görüntüle");
         System.out.println("4. Kadroyu Listele");
-        System.out.println("5. Skor Katkısı Sıralamasını Gör"); // YENİ İSİM
+        System.out.println("5. Skor Katkısı Sıralamasını Gör");
         System.out.println("6. Personel Maas Hesaplaması Yap");
         System.out.println("7. Personel Sil (Ad/Soyad)");
         System.out.println("8. Cikis"); // YENİ SIRA
@@ -83,10 +84,11 @@ public class FutbolTakimiUygulama {
                 performansGoruntulemeEkrani();
                 break;
             case 4:
-                service.listeYazdir(service.getFutbolcuKadrosu());
+                // Sadece Futbolcuları listeler
+                System.out.println(service.listeYazdir(service.getFutbolcuKadrosu()));
                 break;
             case 5: // Skor Katkısı Sıralaması
-                skorKatkisiSiralamasiEkrani(); // Yeni metot çağrıldı
+                skorKatkisiSiralamasiEkrani();
                 break;
             case 6:
                 maasHesaplamaEkrani();
@@ -94,8 +96,8 @@ public class FutbolTakimiUygulama {
             case 7: // Personel Silme
                 personelSilmeEkrani();
                 break;
-            case 8: // Çıkış
-                DosyaIslemleri.kadroVerileriniKaydet(service.getFutbolcuKadrosu());
+            case 8: // Çıkış - HATA DÜZELTİLDİ: Tüm verileri kaydetmek için service metodu çağrıldı.
+                service.tumVerileriKaydet();
                 uygulamaCalisiyor = false;
                 break;
             default:
@@ -191,8 +193,6 @@ public class FutbolTakimiUygulama {
             scanner.nextLine();
         } catch (GecersizFormaNoException e) {
             System.err.println(Formatlayici.renklendir(e.getMessage(), Formatlayici.KIRMİZİ));
-        } catch (KapasiteDolduException e) {
-            System.err.println(Formatlayici.renklendir(e.getMessage(), Formatlayici.KIRMİZİ));
         }
     }
 
@@ -204,8 +204,9 @@ public class FutbolTakimiUygulama {
                     2005, "4-2-3-1", 100000,
                     "B.B. Erzurumspor", 1.5, 5); // Yeni 3 parametre
 
+            service.teknikDirektorEkle(td); // Servis üzerinden ekleme
             System.out.println(Formatlayici.renklendir(td.toString(), Formatlayici.YESIL));
-            System.out.println(Formatlayici.renklendir("Teknik direktor (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
+            System.out.println(Formatlayici.renklendir("Teknik direktor (Ornek) bilgileri basariyla eklendi.", Formatlayici.YESIL));
 
         } catch (Exception e) {
             System.err.println(Formatlayici.renklendir("Teknik direktor eklenemedi: " + e.getMessage(), Formatlayici.KIRMİZİ));
@@ -220,8 +221,9 @@ public class FutbolTakimiUygulama {
                     "Hucum", 1000.5,
                     18, 15, 17, 16, 19, 20); // Yeni 6 puan parametresi
 
+            service.yardimciAntrenorEkle(ya); // Servis üzerinden ekleme
             System.out.println(Formatlayici.renklendir(ya.toString(), Formatlayici.YESIL));
-            System.out.println(Formatlayici.renklendir("Yardimci Antrenor (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
+            System.out.println(Formatlayici.renklendir("Yardimci Antrenor (Ornek) bilgileri basariyla eklendi.", Formatlayici.YESIL));
         } catch (Exception e) {
             System.err.println(Formatlayici.renklendir("Yardimci Antrenor eklenemedi: " + e.getMessage(), Formatlayici.KIRMİZİ));
         }
@@ -235,8 +237,9 @@ public class FutbolTakimiUygulama {
                     "SERT_001", "Ortopedi", true,
                     18, 15, 19, 17); // Yeni 4 puan parametresi
 
+            service.fizyoterapistEkle(fizyo); // Servis üzerinden ekleme
             System.out.println(Formatlayici.renklendir(fizyo.toString(), Formatlayici.YESIL));
-            System.out.println(Formatlayici.renklendir("Fizyoterapist (Ornek) bilgileri konsola yazdirildi.", Formatlayici.YESIL));
+            System.out.println(Formatlayici.renklendir("Fizyoterapist (Ornek) bilgileri basariyla eklendi.", Formatlayici.YESIL));
         } catch (Exception e) {
             System.err.println(Formatlayici.renklendir("Fizyoterapist eklenemedi: " + e.getMessage(), Formatlayici.KIRMİZİ));
         }

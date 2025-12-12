@@ -1,10 +1,12 @@
 package com.takim.model;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Month;
 
-public class TeknikDirektor extends Calisan {
+public class TeknikDirektor extends Calisan implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private int lisansYili;
     private String taktik;
     private double bonusHedefi;
@@ -26,27 +28,41 @@ public class TeknikDirektor extends Calisan {
 
     @Override public double maasHesapla() { return getMaas() + (hizmetYiliHesapla() * 1000); }
     @Override public double primHesapla(int performansPuani) { return performansPuani > 80 ? getMaas() * 0.15 : 0; }
-
     @Override public double yillikMaasArtisiOraniGetir() { return hizmetYiliHesapla() > 5 ? 0.10 : 0.05; }
     @Override public double vergiKesintisiHesapla(Month ay) { return maasHesapla() * 0.20; }
     @Override public double yillikBrutMaasGetir() { return maasHesapla() * 12; }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
-    // EKSİK GETTER'LAR BURAYA EKLENDİ (DosyaIslemleri için kritik)
-    public int getLisansYili() { return lisansYili; }
-    public String getTaktik() { return taktik; }
-    public double getBonusHedefi() { return bonusHedefi; }
+    // GETTER/SETTER METOTLARI
     public String getEskiTakim() { return eskiTakim; }
     public double getPuanOrt() { return puanOrt; }
     public int getKupaSayisi() { return kupaSayisi; }
 
+    /**
+     * DÜZELTİLDİ: Tablo benzeri, okunaklı bir çıktı formatı.
+     */
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + " >> " +
-                super.toString() +
-                ", Taktik: " + taktik +
-                ", Eski Takım: " + eskiTakim +
-                ", Puan Ort.: " + String.format("%.2f", puanOrt) +
-                ", Kupa Sayısı: " + kupaSayisi;
+        return String.format(
+                "==========================================================\n" +
+                        "| %-20s : %s\n" +
+                        "----------------------------------------------------------\n" +
+                        "| %-20s : %s %s\n" +
+                        "| %-20s : %d Yıl\n" +
+                        "| %-20s : %s\n" +
+                        "| %-20s : %s\n" +
+                        "| %-20s : %.2f\n" +
+                        "| %-20s : %d\n" +
+                        "| %-20s : %.2f TL\n" +
+                        "==========================================================",
+                "ÜNVAN", "TEKNİK DİREKTÖR",
+                "Ad Soyad", getAd(), getSoyad(),
+                "Tecrübe", hizmetYiliHesapla(),
+                "Taktik", taktik,
+                "Eski Takım", eskiTakim,
+                "Puan Ortalaması", puanOrt,
+                "Kupa Sayısı", kupaSayisi,
+                "Maaş", getMaas()
+        );
     }
 }
