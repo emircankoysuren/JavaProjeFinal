@@ -15,22 +15,27 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
     private String mevki;
     private int golSayisi;
     private int asistSayisi;
+    private String ulke; // Futbolcunun ülkesi
 
+    // CONSTRUCTOR 1 (9 PARAMETRELİ)
     public Futbolcu(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
-                    int formaNo, String mevki, int golSayisi, int asistSayisi) throws GecersizFormaNoException {
+                    int formaNo, String mevki, int golSayisi, int asistSayisi, String ulke) throws GecersizFormaNoException {
         super(ad, soyad, dogumTarihi, tcKimlikNo);
         setFormaNo(formaNo);
         this.mevki = mevki;
         this.golSayisi = golSayisi;
         this.asistSayisi = asistSayisi;
+        this.ulke = ulke;
     }
 
+    // CONSTRUCTOR 2 (Eski 4 parametreli)
     public Futbolcu(String ad, String soyad, int formaNo, String mevki) {
         super(ad, soyad, null, null);
         this.formaNo = formaNo;
         this.mevki = mevki;
         this.golSayisi = 0;
         this.asistSayisi = 0;
+        this.ulke = "Bilinmiyor";
     }
 
     public int getFormaNo() { return formaNo; }
@@ -62,14 +67,24 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
     public String getMevki() { return mevki; }
     public void setMevki(String mevki) { this.mevki = mevki; }
 
+    public String getUlke() { return ulke; }
+    public void setUlke(String ulke) { this.ulke = ulke; }
+
 
     public int skorKatkisiHesapla() {
         return golSayisi + asistSayisi;
     }
 
+    // YENİ EKLENEN METOT: Kisi'den gelen abstract metot implementasyonu
+    @Override
+    public double genelKatkiHesapla() {
+        return (double)skorKatkisiHesapla();
+    }
+
     public String getSkorKatkisiDetay() {
         return "Forma No: " + formaNo +
                 " | Adı Soyadı: " + getAd() + " " + getSoyad() +
+                " | Ülke: " + ulke +
                 " | Skor Katkısı: " + skorKatkisiHesapla() + " (Gol: " + golSayisi + ", Asist: " + asistSayisi + ")";
     }
 
@@ -78,14 +93,15 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
     public String toString() {
         return "Futbolcu >> " + super.toString() +
                 ", Forma No: " + formaNo +
-                ", Mevki: " + mevki;
+                ", Mevki: " + mevki +
+                ", Ülke: " + ulke;
     }
 
-    // toString'i baz alarak, listeleme için temiz bilgi döndüren metot.
     public String bilgiGetir() {
-        return String.format("%-10s | %-15s | Gol: %2d | Asist: %2d",
+        return String.format("%-10s | %-15s | %-10s | Gol: %2d | Asist: %2d",
                 getFormaNo(),
                 getAd() + " " + getSoyad(),
+                getUlke(),
                 getGolSayisi(),
                 getAsistSayisi());
     }
@@ -110,6 +126,7 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
     public String getPerformansBilgileri() {
         return getAd() + " " + getSoyad() +
                 " (" + mevki + ") | Forma No: " + formaNo +
+                " | Ülke: " + ulke +
                 " | Gol: " + golSayisi +
                 ", Asist: " + asistSayisi;
     }

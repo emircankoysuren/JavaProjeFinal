@@ -4,17 +4,17 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.Month;
 
-/**
- * 1.1: Alt Sinif (3/4). Calisan hiyerarsisi.
- * Serileştirme için Serializable uygulandı.
- */
 public class Fizyoterapist extends Calisan implements Serializable {
 
-    private static final long serialVersionUID = 1L; // Serileştirme ID'si
-    private String sertifikaNo;
+    private static final long serialVersionUID = 1L;
+
     private String uzmanlikAlani;
     private boolean sporMasajYetkisi;
     private short tecrubeYili;
+
+    private String uyruk;
+    private String mezuniyetUniversitesi;
+    private double gorevSuresiYil;
 
     private int fizyoterapiPuani;
     private int sporBilimiPuani;
@@ -29,16 +29,21 @@ public class Fizyoterapist extends Calisan implements Serializable {
         return puan;
     }
 
+    // GÜNCELLENMİŞ YAPICI METOT (15 PARAMETRELİ)
     public Fizyoterapist(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                          double maas, LocalDate iseBaslamaTarihi,
-                         String sertifikaNo, String uzmanlikAlani, boolean sporMasajYetkisi,
+                         String uzmanlikAlani, boolean sporMasajYetkisi,
+                         String uyruk, String mezuniyetUniversitesi, double gorevSuresiYil,
                          int fizyoterapiPuani, int sporBilimiPuani,
                          int uyumlulukPuani, int disiplinPuani) {
         super(ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi);
-        this.sertifikaNo = sertifikaNo;
         this.uzmanlikAlani = uzmanlikAlani;
         this.sporMasajYetkisi = sporMasajYetkisi;
         this.tecrubeYili = (short)hizmetYiliHesapla();
+
+        this.uyruk = uyruk;
+        this.mezuniyetUniversitesi = mezuniyetUniversitesi;
+        this.gorevSuresiYil = gorevSuresiYil;
 
         setFizyoterapiPuani(fizyoterapiPuani);
         setSporBilimiPuani(sporBilimiPuani);
@@ -47,10 +52,12 @@ public class Fizyoterapist extends Calisan implements Serializable {
     }
 
     // GEREKLİ GETTER METOTLARI
-    public String getSertifikaNo() { return sertifikaNo; }
     public String getUzmanlikAlani() { return uzmanlikAlani; }
     public boolean isSporMasajYetkisi() { return sporMasajYetkisi; }
     public short getTecrubeYili() { return tecrubeYili; }
+    public String getUyruk() { return uyruk; }
+    public String getMezuniyetUniversitesi() { return mezuniyetUniversitesi; }
+    public double getGorevSuresiYil() { return gorevSuresiYil; }
 
 
     // YENİ PUAN GETTER/SETTER METOTLARI
@@ -74,17 +81,20 @@ public class Fizyoterapist extends Calisan implements Serializable {
 
     @Override
     public String toString() {
-        return "Fizyoterapist >> " + super.toString() +
-                ", Sertifika: " + sertifikaNo +
+        return "Fizyoterapist >> ID: " + (getId() != null ? getId() : "N/A") + ", " +
+                super.toString() +
+                ", Uzmanlık: " + uzmanlikAlani +
+                ", Uyruk: " + uyruk +
+                ", Mezuniyet: " + mezuniyetUniversitesi +
                 ", Fizyo Puanı: " + fizyoterapiPuani +
                 ", Uyumluluk: " + uyumlulukPuani;
     }
 
-    // Listeleme için formatlı dize döndüren metot
     public String bilgiGetir() {
-        return String.format("%-25s | Uzm. Alan: %-15s | Fizyo Puanı: %2d",
+        return String.format("%-25s | Uzm. Alan: %-15s | Ülke: %-10s | Fizyo Puanı: %2d",
                 getAd() + " " + getSoyad(),
                 getUzmanlikAlani(),
+                getUyruk(),
                 getFizyoterapiPuani());
     }
 }

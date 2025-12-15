@@ -11,6 +11,11 @@ import java.util.*;
 
 public class TakimService {
 
+    // YENİ ALANLAR: ID Sayacı
+    private static int yardimciAntrenorCounter = 0;
+    private static int fizyoterapistCounter = 0;
+
+    // MEVCUT ALANLAR
     private List<Futbolcu> futbolcuKadrosu;
     private List<TeknikDirektor> teknikDirektorler;
     private List<YardimciAntrenor> yardimciAntrenorler;
@@ -33,7 +38,54 @@ public class TakimService {
         macGecmisi = new TreeMap<>();
 
         tumVerileriYukle();
+        // YENİ ÇAĞRI: Sayaçları yüklenen verilere göre başlat
+        initCounters();
         futbolcuKadrosu.forEach(f -> formaNoHaritasi.put(f.getFormaNo(), f));
+    }
+
+    // YENİ METOT: initCounters - Kayıtlı en büyük ID'yi bularak sayaçları başlatır
+    private void initCounters() {
+        // YARDXXX ID'sinin sayısal kısmından en yükseğini bul
+        yardimciAntrenorCounter = yardimciAntrenorler.stream()
+                .map(YardimciAntrenor::getId)
+                .filter(id -> id != null && id.startsWith("YARD"))
+                .map(id -> {
+                    try {
+                        return Integer.parseInt(id.substring(4));
+                    } catch (NumberFormatException e) {
+                        return -1; // Hatalı formatları atla
+                    }
+                })
+                .max(Integer::compare)
+                .orElse(-1) + 1;
+
+        // FİZYXXX ID'sinin sayısal kısmından en yükseğini bul
+        fizyoterapistCounter = fizyoterapistler.stream()
+                .map(Fizyoterapist::getId)
+                .filter(id -> id != null && id.startsWith("FİZY"))
+                .map(id -> {
+                    try {
+                        return Integer.parseInt(id.substring(4));
+                    } catch (NumberFormatException e) {
+                        return -1; // Hatalı formatları atla
+                    }
+                })
+                .max(Integer::compare)
+                .orElse(-1) + 1;
+
+        // Negatif gelirse 0'a sıfırla
+        if (yardimciAntrenorCounter < 0) yardimciAntrenorCounter = 0;
+        if (fizyoterapistCounter < 0) fizyoterapistCounter = 0;
+    }
+
+    // YENİ METOT: Yardımcı Antrenör ID üretimi
+    private String generateYardimciAntrenorId() {
+        return String.format("YARD%03d", yardimciAntrenorCounter++);
+    }
+
+    // YENİ METOT: Fizyoterapist ID üretimi
+    private String generateFizyoterapistId() {
+        return String.format("FİZY%03d", fizyoterapistCounter++);
     }
 
     public void futbolcuEkle(Futbolcu futbolcu) throws GecersizFormaNoException {
@@ -50,12 +102,16 @@ public class TakimService {
         tumVerileriKaydet();
     }
 
+    // GÜNCELLENDİ: ID ataması yapıldı
     public void yardimciAntrenorEkle(YardimciAntrenor ya) {
+        ya.setId(generateYardimciAntrenorId());
         yardimciAntrenorler.add(ya);
         tumVerileriKaydet();
     }
 
+    // GÜNCELLENDİ: ID ataması yapıldı
     public void fizyoterapistEkle(Fizyoterapist fizyo) {
+        fizyo.setId(generateFizyoterapistId());
         fizyoterapistler.add(fizyo);
         tumVerileriKaydet();
     }
@@ -65,14 +121,44 @@ public class TakimService {
     public List<YardimciAntrenor> getYardimciAntrenorler() { return yardimciAntrenorler; }
     public List<Fizyoterapist> getFizyoterapistler() { return fizyoterapistler; }
 
-    public boolean personelSil(String ad, String soyad) {
-        boolean silindi = false;
-        silindi |= futbolcuKadrosu.removeIf(f -> f.getAd().equalsIgnoreCase(ad) && f.getSoyad().equalsIgnoreCase(soyad));
-        silindi |= teknikDirektorler.removeIf(t -> t.getAd().equalsIgnoreCase(ad) && t.getSoyad().equalsIgnoreCase(soyad));
-        silindi |= yardimciAntrenorler.removeIf(y -> y.getAd().equalsIgnoreCase(ad) && y.getSoyad().equalsIgnoreCase(soyad));
-        silindi |= fizyoterapistler.removeIf(f -> f.getAd().equalsIgnoreCase(ad) && f.getSoyad().equalsIgnoreCase(soyad));
+    // KALDIRILDI: Eski personelSil(String ad, String soyad) metodu kaldırıldı.
 
-        if(silindi) tumVerileriKaydet();
+    // YENİ SİLME METOTLARI
+    // 1. Futbolcu Silme (Forma No ile)
+    public boolean futbolcuSil(int formaNo) {
+        boolean silindi = futbolcuKadrosu.removeIf(f -> f.getFormaNo() == formaNo);
+        if (silindi) {
+            formaNoHaritasi.remove(formaNo);
+            tumVerileriKaydet();
+        }
+        return silindi;
+    }
+
+    // 2. Teknik Direktör Silme (Tek kişi)
+    public boolean teknikDirektorSil() {
+        boolean silindi = teknikDirektorler.size() > 0;
+        teknikDirektorler.clear();
+        if (silindi) {
+            tumVerileriKaydet();
+        }
+        return silindi;
+    }
+
+    // 3. Yardımcı Antrenör Silme (YARDXXX ID ile)
+    public boolean yardimciAntrenorSil(String id) {
+        boolean silindi = yardimciAntrenorler.removeIf(ya -> ya.getId() != null && ya.getId().equalsIgnoreCase(id));
+        if (silindi) {
+            tumVerileriKaydet();
+        }
+        return silindi;
+    }
+
+    // 4. Fizyoterapist Silme (FİZYXXX ID ile)
+    public boolean fizyoterapistSil(String id) {
+        boolean silindi = fizyoterapistler.removeIf(f -> f.getId() != null && f.getId().equalsIgnoreCase(id));
+        if (silindi) {
+            tumVerileriKaydet();
+        }
         return silindi;
     }
 

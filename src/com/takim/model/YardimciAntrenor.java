@@ -5,8 +5,13 @@ import java.time.Month;
 
 public class YardimciAntrenor extends Calisan {
 
-    private String uzmanlikAlani;
-    private double sahaIciSure;
+    // MEVCUT ALANLAR
+    private String uzmanlikAlani; // Görev (Yardımcı, Kaleci vb.) olarak kullanılacak
+    private double sahaIciSure; // Görev Süresi (Yıl) olarak kullanılacak
+
+    // YENİ EKLENEN ALANLAR
+    private String uyruk;
+    private String antrenorlukLisansi;
 
     private int hucumPuani;
     private int defansPuani;
@@ -14,6 +19,7 @@ public class YardimciAntrenor extends Calisan {
     private int teknikPuani;
     private int disiplinPuani;
     private int uyumlulukPuani;
+    // ... (checkPuanRange metodu mevcut)
 
     private static int checkPuanRange(int puan, String fieldName) {
         if (puan < 1 || puan > 20) {
@@ -23,13 +29,20 @@ public class YardimciAntrenor extends Calisan {
         return puan;
     }
 
+
+    // GÜNCELLENMİŞ YAPICI METOT (16 PARAMETRELİ)
     public YardimciAntrenor(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                             double maas, LocalDate iseBaslamaTarihi, String uzmanlikAlani, double sahaIciSure,
+                            String uyruk, String antrenorlukLisansi, // YENİ EKLENENLER
                             int hucumPuani, int defansPuani, int taktikPuani,
                             int teknikPuani, int disiplinPuani, int uyumlulukPuani) {
         super(ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi);
         this.uzmanlikAlani = uzmanlikAlani;
         this.sahaIciSure = sahaIciSure;
+
+        // YENİ ALAN ATAMALARI
+        this.uyruk = uyruk;
+        this.antrenorlukLisansi = antrenorlukLisansi;
 
         setHucumPuani(hucumPuani);
         setDefansPuani(defansPuani);
@@ -48,6 +61,11 @@ public class YardimciAntrenor extends Calisan {
     public int getTeknikPuani() { return teknikPuani; }
     public int getDisiplinPuani() { return disiplinPuani; }
     public int getUyumlulukPuani() { return uyumlulukPuani; }
+
+    // YENİ GETTER METOTLARI
+    public String getUyruk() { return uyruk; }
+    public String getAntrenorlukLisansi() { return antrenorlukLisansi; }
+
     public void setHucumPuani(int hucumPuani) { this.hucumPuani = checkPuanRange(hucumPuani, "Hucum"); }
     public void setDefansPuani(int defansPuani) { this.defansPuani = checkPuanRange(defansPuani, "Defans"); }
     public void setTaktikPuani(int taktikPuani) { this.taktikPuani = checkPuanRange(taktikPuani, "Taktik"); }
@@ -64,11 +82,14 @@ public class YardimciAntrenor extends Calisan {
     @Override public double yillikBrutMaasGetir() { return (maasHesapla() * 12) + (hizmetYiliHesapla() * 500); }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
+    // GÜNCELLENMİŞ toString()
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + " >> " +
+        return this.getClass().getSimpleName() + " >> ID: " + (getId() != null ? getId() : "N/A") + ", " +
                 super.toString() +
-                ", Uzmanlık: " + uzmanlikAlani +
+                ", Görev: " + uzmanlikAlani +
+                ", Uyruk: " + uyruk + // YENİ EKLENDİ
+                ", Lisans: " + antrenorlukLisansi + // YENİ EKLENDİ
                 ", Hucum: " + hucumPuani +
                 ", Defans: " + defansPuani +
                 ", Taktik: " + taktikPuani;

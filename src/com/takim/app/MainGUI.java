@@ -17,6 +17,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+// YENİ EKLENEN IMPORTLAR
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 
 public class MainGUI extends Application {
 
@@ -58,9 +61,10 @@ public class MainGUI extends Application {
         sortGoalsButton.setOnAction(e -> handleSkorKatkisiSiralamasi());
         GridPane.setConstraints(sortGoalsButton, 0, 2);
 
-        Button deletePlayerButton = new Button("4. Personel Sil (Ad/Soyad)");
+        // GÜNCELLENDİ: Buton metni ve aksiyon metodu değiştirildi
+        Button deletePlayerButton = new Button("4. Personel Sil");
         deletePlayerButton.setMaxWidth(Double.MAX_VALUE);
-        deletePlayerButton.setOnAction(e -> handleDeletePlayer());
+        deletePlayerButton.setOnAction(e -> personelSilmeEkraniGoster());
         GridPane.setConstraints(deletePlayerButton, 1, 2);
 
         primaryStage.setOnCloseRequest(event -> {
@@ -137,65 +141,617 @@ public class MainGUI extends Application {
     }
 
     private void handleAddNewFutbolcu() {
-        Optional<String> adOpt = promptInput("Futbolcu Ekle", "Bilgiler", "Ad:", "Burak");
-        Optional<String> soyadOpt = adOpt.flatMap(ad -> promptInput("Futbolcu Ekle", "Bilgiler", "Soyad:", "Yılmaz"));
-        Optional<String> formaOpt = soyadOpt.flatMap(s -> promptInput("Futbolcu Ekle", "Bilgiler", "Forma No:", "9"));
-        Optional<String> mevkiOpt = formaOpt.flatMap(f -> promptInput("Futbolcu Ekle", "Bilgiler", "Mevki:", "FORVET"));
+        // Dialog penceresi oluşturma
+        Dialog<Futbolcu> dialog = new Dialog<>();
+        dialog.setTitle("Futbolcu Ekle");
+        dialog.setHeaderText("Lütfen yeni futbolcunun bilgilerini girin.");
 
-        if (mevkiOpt.isPresent()) {
+        // OK ve İPTAL butonlarını ekleme
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        // Giriş alanları için GridPane düzeni oluşturma
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // 1. Ad (Text Input)
+        TextField adField = new TextField();
+        adField.setPromptText("Ad");
+        grid.add(new Label("Ad:"), 0, 0);
+        grid.add(adField, 1, 0);
+
+        // 2. Soyad (Text Input)
+        TextField soyadField = new TextField();
+        soyadField.setPromptText("Soyad");
+        grid.add(new Label("Soyad:"), 0, 1);
+        grid.add(soyadField, 1, 1);
+
+        // 3. Forma No (Text Input)
+        TextField formaNoField = new TextField();
+        formaNoField.setPromptText("Forma No (1-99)");
+        grid.add(new Label("Forma No:"), 0, 2);
+        grid.add(formaNoField, 1, 2);
+
+        // 4. Mevki (Text Input)
+        TextField mevkiField = new TextField();
+        mevkiField.setPromptText("FORVET, ORTA SAHA, vb.");
+        grid.add(new Label("Mevki:"), 0, 3);
+        grid.add(mevkiField, 1, 3);
+
+        // 5. Doğum Tarihi (DatePicker)
+        DatePicker dogumTarihiPicker = new DatePicker();
+        dogumTarihiPicker.setValue(LocalDate.of(1995, 1, 1)); // Varsayılan değer
+        grid.add(new Label("Doğum Tarihi:"), 0, 4);
+        grid.add(dogumTarihiPicker, 1, 4);
+
+        // 6. Ülke (Text Input) - YENİ EKLENDİ
+        TextField ulkeField = new TextField();
+        ulkeField.setPromptText("Örn: Türkiye");
+        grid.add(new Label("Ülke:"), 0, 5);
+        grid.add(ulkeField, 1, 5);
+
+
+        dialog.getDialogPane().setContent(grid);
+
+        // OK butonuna basıldığında sonucu işleme
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                try {
+                    String ad = adField.getText().trim();
+                    String soyad = soyadField.getText().trim();
+                    int formaNo = Integer.parseInt(formaNoField.getText().trim());
+                    String mevki = mevkiField.getText().trim().toUpperCase();
+                    LocalDate dogumTarihi = dogumTarihiPicker.getValue();
+                    String ulke = ulkeField.getText().trim(); // Ülke bilgisini al
+
+                    // Basit alan kontrolü
+                    if (ad.isEmpty() || soyad.isEmpty() || mevki.isEmpty() || dogumTarihi == null || ulke.isEmpty()) {
+                        gosterHataAlert("Eksik Bilgi", "Lütfen tüm alanları doldurun.");
+                        return null;
+                    }
+
+                    String tcKimlikNo = "TC_" + formaNo;
+
+                    // Yeni Futbolcu nesnesini döndür (YENİ YAPICI METOT KULLANILDI)
+                    return new Futbolcu(ad, soyad, dogumTarihi, tcKimlikNo, formaNo, mevki, 0, 0, ulke);
+
+                } catch (NumberFormatException e) {
+                    gosterHataAlert("Giriş Hatası", "Forma Numarası sadece sayı olmalıdır.");
+                    return null;
+                } catch (GecersizFormaNoException e) {
+                    gosterHataAlert("Kural Hatası", e.getMessage());
+                    return null;
+                } catch (Exception e) {
+                    gosterHataAlert("Genel Hata", "Personel eklenirken beklenmedik bir hata oluştu: " + e.getMessage());
+                    return null;
+                }
+            }
+            return null; // İptal veya kapatma durumunda null döndür
+        });
+
+        // Diyaloğu göster ve sonucu al
+        Optional<Futbolcu> sonuc = dialog.showAndWait();
+
+        // Sonucu işleme
+        sonuc.ifPresent(f -> {
             try {
-                String ad = adOpt.get();
-                String soyad = soyadOpt.get();
-                int forma = Integer.parseInt(formaOpt.get());
-                String mevki = mevkiOpt.get().toUpperCase();
-
-                Futbolcu f = new Futbolcu(ad, soyad, LocalDate.of(1990, 1, 1), "TC_"+forma, forma, mevki, 0, 0);
                 service.futbolcuEkle(f);
-                showMessage(f.getAd() + " " + f.getSoyad() + " eklendi.", Formatlayici.YESIL);
-            } catch (Exception e) { showMessage("Hata: " + e.getMessage(), Formatlayici.KIRMİZİ); }
-        }
+                showMessage(f.getAd() + " " + f.getSoyad() + " (" + f.getFormaNo() + ") başarıyla eklendi.", Formatlayici.YESIL);
+            } catch (Exception e) {
+                // Bu catch bloğu, service.futbolcuEkle'den gelen hataları yakalar
+                gosterHataAlert("Ekleme Hatası", e.getMessage());
+            }
+        });
     }
 
     private void handleAddNewTeknikDirektor() {
-        try {
-            TeknikDirektor td = new TeknikDirektor("Okan", "Buruk", LocalDate.of(1973, 10, 19), "TC_TD", 500000, LocalDate.now(), 2000, "4-2-3-1", 1000, "GS", 2.5, 10);
-            service.teknikDirektorEkle(td);
-            showMessage("Teknik Direktör eklendi.", Formatlayici.MAVI);
-        } catch (Exception e) { showMessage("Hata: " + e.getMessage(), Formatlayici.KIRMİZİ); }
-    }
+        // Dialog penceresi oluşturma
+        Dialog<TeknikDirektor> dialog = new Dialog<>();
+        dialog.setTitle("Teknik Direktör Ekle");
+        dialog.setHeaderText("Lütfen Teknik Direktörün tüm profil bilgilerini girin.");
 
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // Input Alanları - Tümü BOŞ BAŞLATILDI
+        TextField adField = new TextField();
+        adField.setPromptText("Örn: Okan");
+
+        TextField soyadField = new TextField();
+        soyadField.setPromptText("Örn: Buruk");
+
+        DatePicker dogumTarihiPicker = new DatePicker();
+        dogumTarihiPicker.setPromptText("Tarih Seçin");
+
+        // TextField dogumYeriField = new TextField(); // KALDIRILDI
+        // dogumYeriField.setPromptText("Örn: İstanbul"); // KALDIRILDI
+
+        TextField uyrukField = new TextField();
+        uyrukField.setPromptText("Örn: Türkiye");
+
+        TextField lisansField = new TextField();
+        lisansField.setPromptText("Örn: UEFA Pro Lisans");
+
+        TextField gorevSuresiField = new TextField();
+        gorevSuresiField.setPromptText("Örn: 1.5");
+
+        TextField taktikField = new TextField();
+        taktikField.setPromptText("Örn: 4-2-3-1");
+
+        TextField puanOrtField = new TextField();
+        puanOrtField.setPromptText("Örn: 2.05");
+
+        TextField maasField = new TextField();
+        maasField.setPromptText("Örn: 500000");
+
+        // GİZLİ/Varsayılan Alanlar için yine de boş TextField kullanmak daha güvenli:
+        // Bu değerler constructor çağrısında hala gereklidir.
+
+        int row = 0;
+        grid.add(new Label("Ad:"), 0, row); grid.add(adField, 1, row++);
+        grid.add(new Label("Soyad:"), 0, row); grid.add(soyadField, 1, row++);
+        grid.add(new Label("Doğum Tarihi:"), 0, row); grid.add(dogumTarihiPicker, 1, row++);
+        // Doğum Yeri Satırı KALDIRILDI: grid.add(new Label("Doğum Yeri:"), 0, row); grid.add(dogumYeriField, 1, row++);
+        grid.add(new Label("Uyruk/Ülke:"), 0, row); grid.add(uyrukField, 1, row++);
+        grid.add(new Label("Antrenör Lisansı:"), 0, row); grid.add(lisansField, 1, row++);
+        grid.add(new Label("Görev Süresi (Yıl):"), 0, row); grid.add(gorevSuresiField, 1, row++);
+        grid.add(new Label("Tercih Edilen Taktik:"), 0, row); grid.add(taktikField, 1, row++);
+        grid.add(new Label("Maç Başına Puan Ort.:"), 0, row); grid.add(puanOrtField, 1, row++);
+        grid.add(new Label("Maaş (TL):"), 0, row); grid.add(maasField, 1, row++);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // OK butonuna basıldığında sonucu işleme
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                try {
+                    // Metin ve Tarih bilgileri
+                    String ad = adField.getText().trim();
+                    String soyad = soyadField.getText().trim();
+                    LocalDate dogumTarihi = dogumTarihiPicker.getValue();
+                    String taktik = taktikField.getText().trim();
+                    // String dogumYeri = dogumYeriField.getText().trim(); // KALDIRILDI
+                    String uyruk = uyrukField.getText().trim();
+                    String lisans = lisansField.getText().trim();
+
+                    // Sayısal bilgileri parse etmeden önce boşluk kontrolü yapın
+                    String puanOrtStr = puanOrtField.getText().trim();
+                    String maasStr = maasField.getText().trim();
+                    String gorevSuresiStr = gorevSuresiField.getText().trim();
+
+                    // Basit Kontroller (Zorunlu alanlar)
+                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || taktik.isEmpty() || dogumTarihi == null || maasStr.isEmpty() || puanOrtStr.isEmpty() || gorevSuresiStr.isEmpty()) {
+                        gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
+                        return null;
+                    }
+
+                    // Sayısal bilgiler (Parsing yapılır)
+                    double puanOrt = Double.parseDouble(puanOrtStr);
+                    double maas = Double.parseDouble(maasStr);
+                    double gorevSuresi = Double.parseDouble(gorevSuresiStr);
+
+                    // Sabit/Varsayılan Değerler (Constructor gerektirdiği için mantıklı bir değer atanmalı)
+                    String tcKimlikNo = "TD_TC_" + ad.charAt(0);
+                    LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
+                    int lisansYili = LocalDate.now().getYear() - 20;
+                    int kupaSayisi = 0;
+                    String eskiTakim = "Bilinmiyor";
+                    double bonusHedefi = maas * 0.1;
+
+                    // Yeni TeknikDirektor nesnesini döndür (15 PARAMETRELİ YAPICI KULLANILDI)
+                    return new TeknikDirektor(
+                            ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
+                            lisansYili, taktik, bonusHedefi, eskiTakim, puanOrt, kupaSayisi,
+                            uyruk, lisans, gorevSuresi // dogumYeri parametresi çıkarıldı
+                    );
+
+                } catch (NumberFormatException e) {
+                    gosterHataAlert("Giriş Hatası", "Maaş, Puan Ortalaması ve Görev Süresi alanlarına sadece sayı giriniz.");
+                    return null;
+                } catch (Exception e) {
+                    gosterHataAlert("Genel Hata", "Teknik Direktör eklenirken bir hata oluştu: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            return null; // İptal veya kapatma durumunda null döndür
+        });
+
+        // Diyaloğu göster ve sonucu al
+        Optional<TeknikDirektor> sonuc = dialog.showAndWait();
+
+        // Sonucu işleme
+        sonuc.ifPresent(td -> {
+            try {
+                service.teknikDirektorEkle(td);
+                showMessage("Teknik Direktör " + td.getAd() + " " + td.getSoyad() + " başarıyla eklendi.", Formatlayici.MAVI);
+            } catch (Exception e) {
+                gosterHataAlert("Ekleme Hatası", e.getMessage());
+            }
+        });
+    }
     private void handleAddNewYardimciAntrenor() {
-        try {
-            YardimciAntrenor ya = new YardimciAntrenor("Ismail", "Kartal", LocalDate.of(1980, 1, 1), "TC_YA", 200000, LocalDate.now(), "Hucum", 100, 10, 10, 10, 10, 10, 10);
-            service.yardimciAntrenorEkle(ya);
-            showMessage("Yardımcı Antrenör eklendi.", Formatlayici.MAVI);
-        } catch (Exception e) { showMessage("Hata: " + e.getMessage(), Formatlayici.KIRMİZİ); }
+        // Dialog penceresi oluşturma
+        Dialog<YardimciAntrenor> dialog = new Dialog<>();
+        dialog.setTitle("Yardımcı Antrenör Ekle");
+        dialog.setHeaderText("Lütfen Yardımcı Antrenörün profil bilgilerini girin.");
+
+        // HATA DÜZELTİLDİ: ButtonType.BUTTON_CANCEL yerine ButtonType.CANCEL kullanıldı
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // Input Alanları
+        TextField adField = new TextField();
+        adField.setPromptText("Örn: İrfan");
+
+        TextField soyadField = new TextField();
+        soyadField.setPromptText("Örn: Saraloğlu");
+
+        DatePicker dogumTarihiPicker = new DatePicker();
+        dogumTarihiPicker.setPromptText("Tarih Seçin");
+
+        TextField uyrukField = new TextField();
+        uyrukField.setPromptText("Örn: Türkiye");
+
+        TextField lisansField = new TextField();
+        lisansField.setPromptText("Örn: UEFA B Lisans");
+
+        TextField gorevSuresiField = new TextField();
+        gorevSuresiField.setPromptText("Örn: 2.5");
+
+        // Görev/Uzmanlık Seçimi (ChoiceBox)
+        ChoiceBox<String> gorevAlaniChoice = new ChoiceBox<>();
+        gorevAlaniChoice.getItems().addAll(
+                "Yardımcı Antrenör",
+                "Kaleci Antrenörü",
+                "Atletik Performans Antrenörü",
+                "Maç Analisti",
+                "Duran Top Antrenörü"
+        );
+        gorevAlaniChoice.setValue("Yardımcı Antrenör"); // Varsayılan değer
+
+        TextField maasField = new TextField();
+        maasField.setPromptText("Örn: 200000");
+
+        int row = 0;
+        grid.add(new Label("Ad:"), 0, row); grid.add(adField, 1, row++);
+        grid.add(new Label("Soyad:"), 0, row); grid.add(soyadField, 1, row++);
+        grid.add(new Label("Doğum Tarihi:"), 0, row); grid.add(dogumTarihiPicker, 1, row++);
+        grid.add(new Label("Uyruk/Ülke:"), 0, row); grid.add(uyrukField, 1, row++);
+        grid.add(new Label("Antrenör Lisansı:"), 0, row); grid.add(lisansField, 1, row++);
+        grid.add(new Label("Görev Süresi (Yıl):"), 0, row); grid.add(gorevSuresiField, 1, row++);
+        grid.add(new Label("Görev:"), 0, row); grid.add(gorevAlaniChoice, 1, row++);
+        grid.add(new Label("Maaş (TL):"), 0, row); grid.add(maasField, 1, row++);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // OK butonuna basıldığında sonucu işleme
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                try {
+                    // Metin ve Tarih bilgileri
+                    String ad = adField.getText().trim();
+                    String soyad = soyadField.getText().trim();
+                    LocalDate dogumTarihi = dogumTarihiPicker.getValue();
+                    String uyruk = uyrukField.getText().trim();
+                    String lisans = lisansField.getText().trim();
+                    String gorevAlani = gorevAlaniChoice.getValue();
+
+                    String gorevSuresiStr = gorevSuresiField.getText().trim();
+                    String maasStr = maasField.getText().trim();
+
+                    // Basit Kontroller (Zorunlu alanlar)
+                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || gorevAlani == null || dogumTarihi == null || maasStr.isEmpty() || gorevSuresiStr.isEmpty()) {
+                        gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
+                        return null;
+                    }
+
+                    // Sayısal bilgiler (Parsing yapılır)
+                    double maas = Double.parseDouble(maasStr);
+                    double gorevSuresi = Double.parseDouble(gorevSuresiStr);
+
+                    // Sabit/Varsayılan Değerler
+                    String tcKimlikNo = "YA_TC_" + ad.charAt(0);
+                    LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
+
+                    // Performans Puanları (Basitleştirmek için default 15 atandı)
+                    int defaultPuan = 15;
+
+                    // Yeni YardimciAntrenor nesnesini döndür (16 PARAMETRELİ YAPICI KULLANILDI)
+                    return new YardimciAntrenor(
+                            ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
+                            gorevAlani, gorevSuresi, uyruk, lisans,
+                            defaultPuan, defaultPuan, defaultPuan, defaultPuan, defaultPuan, defaultPuan
+                    );
+
+                } catch (NumberFormatException e) {
+                    gosterHataAlert("Giriş Hatası", "Maaş ve Görev Süresi alanlarına sadece sayı giriniz.");
+                    return null;
+                } catch (Exception e) {
+                    gosterHataAlert("Genel Hata", "Yardımcı Antrenör eklenirken bir hata oluştu: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            return null; // İptal veya kapatma durumunda null döndür
+        });
+
+        // Diyaloğu göster ve sonucu al
+        Optional<YardimciAntrenor> sonuc = dialog.showAndWait();
+
+        // Sonucu işleme
+        sonuc.ifPresent(ya -> {
+            try {
+                service.yardimciAntrenorEkle(ya);
+                showMessage("Yardımcı Antrenör " + ya.getAd() + " " + ya.getSoyad() + " başarıyla eklendi.", Formatlayici.MAVI);
+            } catch (Exception e) {
+                gosterHataAlert("Ekleme Hatası", e.getMessage());
+            }
+        });
     }
 
+
+    // MainGUI.java içindeki metot:
     private void handleAddNewFizyoterapist() {
-        try {
-            Fizyoterapist f = new Fizyoterapist("Ali", "Veli", LocalDate.of(1985, 1, 1), "TC_F", 150000, LocalDate.now(), "SERT_1", "Masaj", true, 10, 10, 10, 10);
-            service.fizyoterapistEkle(f);
-            showMessage("Fizyoterapist eklendi.", Formatlayici.MAVI);
-        } catch (Exception e) { showMessage("Hata: " + e.getMessage(), Formatlayici.KIRMİZİ); }
+        // Dialog penceresi oluşturma
+        Dialog<Fizyoterapist> dialog = new Dialog<>();
+        dialog.setTitle("Fizyoterapist Ekle");
+        dialog.setHeaderText("Lütfen Fizyoterapistin profil bilgilerini girin.");
+
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        // Input Alanları
+        TextField adField = new TextField();
+        adField.setPromptText("Ad");
+
+        TextField soyadField = new TextField();
+        soyadField.setPromptText("Soyad");
+
+        DatePicker dogumTarihiPicker = new DatePicker();
+        dogumTarihiPicker.setPromptText("Tarih Seçin");
+
+        TextField uyrukField = new TextField();
+        uyrukField.setPromptText("Örn: Türkiye");
+
+        TextField universiteField = new TextField();
+        universiteField.setPromptText("Örn: Marmara Üniversitesi");
+
+        TextField gorevSuresiField = new TextField();
+        gorevSuresiField.setPromptText("Örn: 4.0");
+
+        // TextField sertifikaField = new TextField(); // KALDIRILDI
+        // sertifikaField.setPromptText("Örn: SERT_001"); // KALDIRILDI
+
+        TextField uzmanlikField = new TextField();
+        uzmanlikField.setPromptText("Örn: Spor Ortopedisi");
+
+        CheckBox masajYetkisiCheck = new CheckBox("Spor Masaj Yetkisi Var");
+
+        TextField maasField = new TextField();
+        maasField.setPromptText("Örn: 150000");
+
+        int row = 0;
+        grid.add(new Label("Ad:"), 0, row); grid.add(adField, 1, row++);
+        grid.add(new Label("Soyad:"), 0, row); grid.add(soyadField, 1, row++);
+        grid.add(new Label("Doğum Tarihi:"), 0, row); grid.add(dogumTarihiPicker, 1, row++);
+        grid.add(new Label("Uyruk/Ülke:"), 0, row); grid.add(uyrukField, 1, row++);
+        grid.add(new Label("Mezuniyet Üni.:"), 0, row); grid.add(universiteField, 1, row++);
+        grid.add(new Label("Görev Süresi (Yıl):"), 0, row); grid.add(gorevSuresiField, 1, row++);
+        grid.add(new Label("Uzmanlık Alanı:"), 0, row); grid.add(uzmanlikField, 1, row++);
+        // Sertifika Satırı KALDIRILDI
+        grid.add(new Label("Maaş (TL):"), 0, row); grid.add(maasField, 1, row++);
+        grid.add(masajYetkisiCheck, 1, row++);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // OK butonuna basıldığında sonucu işleme
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                try {
+                    // Metin ve Tarih bilgileri
+                    String ad = adField.getText().trim();
+                    String soyad = soyadField.getText().trim();
+                    LocalDate dogumTarihi = dogumTarihiPicker.getValue();
+                    String uyruk = uyrukField.getText().trim();
+                    String universite = universiteField.getText().trim();
+                    // String sertifika = ""; // KALDIRILDI
+                    String uzmanlik = uzmanlikField.getText().trim();
+                    boolean masajYetkisi = masajYetkisiCheck.isSelected();
+
+                    String gorevSuresiStr = gorevSuresiField.getText().trim();
+                    String maasStr = maasField.getText().trim();
+
+                    // Basit Kontroller (Zorunlu alanlar)
+                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || dogumTarihi == null || universite.isEmpty() || gorevSuresiStr.isEmpty() || maasStr.isEmpty()) {
+                        gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
+                        return null;
+                    }
+
+                    // Sayısal bilgiler (Parsing yapılır)
+                    double maas = Double.parseDouble(maasStr);
+                    double gorevSuresi = Double.parseDouble(gorevSuresiStr);
+
+                    // Sabit/Varsayılan Değerler (Constructor gerektirdiği için)
+                    String tcKimlikNo = "FIZYO_TC_" + ad.charAt(0);
+                    LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
+
+                    // Performans Puanları (Basitleştirmek için default 15 atandı)
+                    int defaultPuan = 15;
+
+                    // Sertifika No parametresi artık yok, sabit değer atandı
+                    String varsayilanSertifikaNo = "YOK";
+
+                    // Yeni Fizyoterapist nesnesini döndür (YENİ 15 PARAMETRELİ YAPICI KULLANILDI)
+                    return new Fizyoterapist(
+                            ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
+                            uzmanlik, masajYetkisi, // sertifikaNo çıkarıldı
+                            uyruk, universite, gorevSuresi,
+                            defaultPuan, defaultPuan, defaultPuan, defaultPuan
+                    );
+
+                } catch (NumberFormatException e) {
+                    gosterHataAlert("Giriş Hatası", "Maaş ve Görev Süresi alanlarına sadece sayı giriniz.");
+                    return null;
+                } catch (Exception e) {
+                    gosterHataAlert("Genel Hata", "Fizyoterapist eklenirken bir hata oluştu: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+            return null; // İptal veya kapatma durumunda null döndür
+        });
+
+        // Diyaloğu göster ve sonucu al
+        Optional<Fizyoterapist> sonuc = dialog.showAndWait();
+
+        // Sonucu işleme
+        sonuc.ifPresent(f -> {
+            try {
+                service.fizyoterapistEkle(f);
+                showMessage("Fizyoterapist " + f.getAd() + " " + f.getSoyad() + " başarıyla eklendi (ID: " + f.getId() + ").", Formatlayici.MAVI);
+            } catch (Exception e) {
+                gosterHataAlert("Ekleme Hatası", e.getMessage());
+            }
+        });
     }
 
     private void handleSkorKatkisiSiralamasi() {
         messageArea.setText(cleanAnsi(service.skorKatkisiRaporuGetir()));
     }
 
-    private void handleDeletePlayer() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Sil");
-        dialog.setContentText("Ad Soyad:");
-        dialog.showAndWait().ifPresent(tamAd -> {
-            String[] parts = tamAd.trim().split("\\s+", 2);
-            if(parts.length == 2 && service.personelSil(parts[0], parts[1])) {
-                showMessage("Silindi: " + tamAd, Formatlayici.YESIL);
-            } else {
-                showMessage("Bulunamadı: " + tamAd, Formatlayici.KIRMİZİ);
+    // YENİ SİLME AKIŞI METOTLARI
+
+    /**
+     * Personel silme işleminin ilk adımı: Hangi tip personelin silineceğini seçtirir.
+     */
+    private void personelSilmeEkraniGoster() {
+        List<String> secimler = Arrays.asList(
+                "Futbolcu (Forma No)",
+                "Teknik Direktör (Tek Kişi)",
+                "Yardımcı Antrenör (YARDXXX ID)",
+                "Fizyoterapist (FİZYXXX ID)"
+        );
+
+        ChoiceDialog<String> dialogSecim = new ChoiceDialog<>(secimler.get(0), secimler);
+        dialogSecim.setTitle("Personel Silme");
+        dialogSecim.setHeaderText("Lütfen silmek istediğiniz personel tipini seçin.");
+        dialogSecim.setContentText("Personel Tipi:");
+
+        Optional<String> sonucSecim = dialogSecim.showAndWait();
+
+        if (sonucSecim.isPresent()) {
+            String secilenTip = sonucSecim.get();
+
+            switch (secilenTip) {
+                case "Futbolcu (Forma No)":
+                    futbolcuSilmeEkrani();
+                    break;
+                case "Teknik Direktör (Tek Kişi)":
+                    teknikDirektorSilmeEkrani();
+                    break;
+                case "Yardımcı Antrenör (YARDXXX ID)":
+                    calisanSilmeEkrani("Yardımcı Antrenör", "YARDXXX ID");
+                    break;
+                case "Fizyoterapist (FİZYXXX ID)":
+                    calisanSilmeEkrani("Fizyoterapist", "FİZYXXX ID");
+                    break;
             }
-        });
+        }
+    }
+
+    // Forma No ile Futbolcu Silme
+    private void futbolcuSilmeEkrani() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Futbolcu Sil");
+        dialog.setHeaderText("Silinecek futbolcunun Forma Numarasını girin.");
+        dialog.setContentText("Forma No:");
+
+        Optional<String> sonuc = dialog.showAndWait();
+        if (sonuc.isPresent() && !sonuc.get().trim().isEmpty()) {
+            try {
+                int formaNo = Integer.parseInt(sonuc.get().trim());
+                boolean silindi = service.futbolcuSil(formaNo); // Service çağrısı
+                gosterSonucAlert(silindi,
+                        "Futbolcu Silme Sonucu",
+                        "Futbolcu (" + formaNo + ") başarıyla silindi.",
+                        "HATA: Bu forma numarasına sahip futbolcu bulunamadı.");
+            } catch (NumberFormatException e) {
+                gosterHataAlert("Giriş Hatası", "Forma numarası sadece rakamlardan oluşmalıdır.");
+            }
+        }
+    }
+
+    // Teknik Direktör Silme
+    private void teknikDirektorSilmeEkrani() {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Teknik Direktör Silme Onayı");
+        alert.setHeaderText("Teknik Direktör silinecektir.");
+        alert.setContentText("Bu işlemi onaylıyor musunuz?");
+
+        Optional<ButtonType> sonuc = alert.showAndWait();
+        if (sonuc.isPresent() && sonuc.get() == ButtonType.OK) {
+            boolean silindi = service.teknikDirektorSil(); // Service çağrısı
+            gosterSonucAlert(silindi,
+                    "Teknik Direktör Silme Sonucu",
+                    "Teknik Direktör başarıyla silindi.",
+                    "HATA: Teknik Direktör bulunamadı veya kadro zaten boş.");
+        }
+    }
+
+    // YARDXXX/FİZYXXX ID ile Çalışan Silme
+    private void calisanSilmeEkrani(String tip, String idFormat) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle(tip + " Sil");
+        dialog.setHeaderText("Silinecek " + tip + "'in " + idFormat + " kodunu girin.");
+        dialog.setContentText(idFormat + " Kodu:");
+
+        Optional<String> sonuc = dialog.showAndWait();
+        if (sonuc.isPresent() && !sonuc.get().trim().isEmpty()) {
+            String id = sonuc.get().trim().toUpperCase();
+            boolean silindi = false;
+
+            if (tip.contains("Yardımcı")) {
+                silindi = service.yardimciAntrenorSil(id); // Service çağrısı
+            } else if (tip.contains("Fizyoterapist")) {
+                silindi = service.fizyoterapistSil(id); // Service çağrısı
+            }
+
+            gosterSonucAlert(silindi,
+                    tip + " Silme Sonucu",
+                    tip + " (" + id + ") başarıyla silindi.",
+                    "HATA: Bu ID koduna (" + id + ") sahip " + tip + " bulunamadı.");
+        }
+    }
+
+    // Genel Sonuç ve Hata Alert metotları (Kullanıcıya geri bildirim için)
+    private void gosterSonucAlert(boolean basarili, String baslik, String basariMesaj, String hataMesaj) {
+        Alert alert = new Alert(basarili ? AlertType.INFORMATION : AlertType.ERROR);
+        alert.setTitle(baslik);
+        alert.setHeaderText(null);
+        alert.setContentText(basarili ? basariMesaj : hataMesaj);
+        alert.showAndWait();
+    }
+
+    private void gosterHataAlert(String baslik, String mesaj) {
+        Alert alert = new Alert(AlertType.ERROR);
+        alert.setTitle(baslik);
+        alert.setHeaderText(null);
+        alert.setContentText(mesaj);
+        alert.showAndWait();
     }
 
     public static void main(String[] args) {

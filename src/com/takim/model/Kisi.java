@@ -15,8 +15,8 @@ public abstract class Kisi implements Serializable {
     private String soyad;
     private LocalDate dogumTarihi;
     private String tcKimlikNo;
-    private double maas;
-    private LocalDate iseBaslamaTarihi;
+    // Calisan sınıfına taşınacağı için burada maas ve iseBaslamaTarihi kaldırıldı.
+    // Ancak alt sınıflar maaş ve tarih parametrelerini Kisi yapısına göre bekleyebilir.
 
     // Constructor 1
     public Kisi(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo) {
@@ -26,27 +26,28 @@ public abstract class Kisi implements Serializable {
         this.tcKimlikNo = tcKimlikNo;
     }
 
-    // Constructor 2
+    // Constructor 2 (Calisan için gerekli olan ancak Kisi'de tutulmayan alanları alır)
+    // NOT: Calisan sınıfı bu constructor'ı kullanacaktır.
     public Kisi(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo, double maas, LocalDate iseBaslamaTarihi) {
         this(ad, soyad, dogumTarihi, tcKimlikNo);
-        this.maas = maas;
-        this.iseBaslamaTarihi = iseBaslamaTarihi;
+        // Bu parametreler Kisi sınıfında tutulmaz, sadece Calisan'ın çağrısını destekler.
     }
 
-    // Abstract metod
+    // Abstract metod 1 (mevcut)
     public abstract void bilgiYazdir();
 
-    public int hizmetYiliHesapla() {
-        if (iseBaslamaTarihi == null) return 0;
-        return LocalDate.now().getYear() - iseBaslamaTarihi.getYear();
-    }
+    // Abstract metod 2 (Gereksinim 4.2 için eklenmişti)
+    public abstract double genelKatkiHesapla();
 
-    // Getter ve Setterlar
+    // Getter ve Setterlar (getMaas ve getIseBaslamaTarihi Calisan'a taşındı)
     public String getAd() { return ad; }
     public String getSoyad() { return soyad; }
     public LocalDate getDogumTarihi() { return dogumTarihi; }
     public String getTcKimlikNo() { return tcKimlikNo; }
-    public double getMaas() { return maas; }
+
+    // getMaas metodu burada yok. Calisan sınıfına bakın.
+    // hizmetYiliHesapla metodu burada yok. Calisan sınıfına bakın.
+
 
     @Override
     public String toString() {
