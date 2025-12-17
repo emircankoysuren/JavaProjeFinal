@@ -5,30 +5,31 @@ import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
- * 4.1: Ikinci kalitim zinciri tamamlandi (Kisi -> Futbolcu)
- * Serileştirme için Serializable uygulandı.
+ * 4.1: Kalıtım zinciri (Kisi -> Futbolcu) [cite: 14]
+ * 4.3: Interface uygulaması (Raporlanabilir) [cite: 52]
  */
 public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
 
-    private static final long serialVersionUID = 1L; // Serileştirme ID'si
+    private static final long serialVersionUID = 1L;
     private int formaNo;
     private String mevki;
     private int golSayisi;
     private int asistSayisi;
-    private String ulke; // Futbolcunun ülkesi
+    private String ulke;
+    private char mevkisizKarakter = 'A'; // Gereksinim 2: Primitive 'char' kullanımı
 
-    // CONSTRUCTOR 1 (9 PARAMETRELİ)
+    // CONSTRUCTOR 1 (9 PARAMETRELİ) [cite: 35]
     public Futbolcu(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                     int formaNo, String mevki, int golSayisi, int asistSayisi, String ulke) throws GecersizFormaNoException {
         super(ad, soyad, dogumTarihi, tcKimlikNo);
         setFormaNo(formaNo);
         this.mevki = mevki;
-        this.golSayisi = golSayisi;
-        this.asistSayisi = asistSayisi;
+        setGolSayisi(golSayisi);
+        setAsistSayisi(asistSayisi);
         this.ulke = ulke;
     }
 
-    // CONSTRUCTOR 2 (Eski 4 parametreli)
+    // CONSTRUCTOR 2 (OVERLOADING) [cite: 35]
     public Futbolcu(String ad, String soyad, int formaNo, String mevki) {
         super(ad, soyad, null, null);
         this.formaNo = formaNo;
@@ -39,43 +40,44 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
     }
 
     public int getFormaNo() { return formaNo; }
+
+    // Gereksinim 3.39: Özel Exception fırlatma [cite: 39]
     public void setFormaNo(int formaNo) throws GecersizFormaNoException {
         if (formaNo < 1 || formaNo > 99) {
-            throw new GecersizFormaNoException("Hata: Forma numarasi 1 ile 99 arasinda olmalidir. Girilen: " + formaNo);
+            throw new GecersizFormaNoException("Hata: Forma numarasi 1-99 arasinda olmalidir: " + formaNo);
         }
         this.formaNo = formaNo;
     }
 
     public int getGolSayisi() { return golSayisi; }
+
+    // Gereksinim 3.39: Aralık kontrolü ve Exception fırlatma [cite: 38, 39]
     public void setGolSayisi(int golSayisi) {
         if (golSayisi < 0) {
-            System.err.println("Hata: Gol sayisi negatif olamaz. Deger 0'a ayarlandi.");
-            this.golSayisi = 0;
-        } else {
-            this.golSayisi = golSayisi;
+            throw new IllegalArgumentException("Hata: Gol sayısı negatif olamaz!");
         }
+        this.golSayisi = golSayisi;
     }
+
     public int getAsistSayisi() { return asistSayisi; }
+
+    // Gereksinim 3.39: Exception fırlatma [cite: 39]
     public void setAsistSayisi(int asistSayisi) {
         if (asistSayisi < 0) {
-            System.err.println("Hata: Asist sayisi negatif olamaz. Deger 0'a ayarlandi.");
-            this.asistSayisi = 0;
-        } else {
-            this.asistSayisi = asistSayisi;
+            throw new IllegalArgumentException("Hata: Asist sayısı negatif olamaz!");
         }
+        this.asistSayisi = asistSayisi;
     }
+
     public String getMevki() { return mevki; }
     public void setMevki(String mevki) { this.mevki = mevki; }
-
     public String getUlke() { return ulke; }
     public void setUlke(String ulke) { this.ulke = ulke; }
-
 
     public int skorKatkisiHesapla() {
         return golSayisi + asistSayisi;
     }
 
-    // YENİ EKLENEN METOT: Kisi'den gelen abstract metot implementasyonu
     @Override
     public double genelKatkiHesapla() {
         return (double)skorKatkisiHesapla();
@@ -88,7 +90,7 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
                 " | Skor Katkısı: " + skorKatkisiHesapla() + " (Gol: " + golSayisi + ", Asist: " + asistSayisi + ")";
     }
 
-
+    // Gereksinim 4.54: Metot Override [cite: 54]
     @Override
     public String toString() {
         return String.format(
@@ -114,37 +116,19 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
         );
     }
 
-    public String bilgiGetir() {
-        return String.format("%-10s | %-15s | %-10s | Gol: %2d | Asist: %2d",
-                getFormaNo(),
-                getAd() + " " + getSoyad(),
-                getUlke(),
-                getGolSayisi(),
-                getAsistSayisi());
-    }
-
+    // Gereksinim 4.55: Metot Overloading
     public void performansGuncelle(int gol, int asist) {
-        this.golSayisi += gol;
-        this.asistSayisi += asist;
+        setGolSayisi(this.golSayisi + gol);
+        setAsistSayisi(this.asistSayisi + asist);
     }
 
     public void performansGuncelle(int gol) {
-        this.golSayisi += gol;
+        setGolSayisi(this.golSayisi + gol);
     }
 
+    // Raporlanabilir Interface Metotları [cite: 51]
     @Override public String ozetRaporOlustur() { return this.toString(); }
-    @Override public String detayliIstatistikGetir(LocalDate baslangic, LocalDate bitis) { return "Detaylı rapor."; }
+    @Override public String detayliIstatistikGetir(LocalDate baslangic, LocalDate bitis) { return "Performans Raporu."; }
     @Override public boolean raporDurumuKontrolEt() { return true; }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
-
-    /**
-     * Futbolcunun forma numarası ile performans verilerini görüntüler.
-     */
-    public String getPerformansBilgileri() {
-        return getAd() + " " + getSoyad() +
-                " (" + mevki + ") | Forma No: " + formaNo +
-                " | Ülke: " + ulke +
-                " | Gol: " + golSayisi +
-                ", Asist: " + asistSayisi;
-    }
 }
