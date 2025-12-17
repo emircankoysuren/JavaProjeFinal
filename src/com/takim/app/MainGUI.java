@@ -258,7 +258,7 @@ public class MainGUI extends Application {
         grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        // Input Alanları - Tümü BOŞ BAŞLATILDI
+        // Input Alanları
         TextField adField = new TextField();
         adField.setPromptText("Örn: Okan");
 
@@ -267,9 +267,6 @@ public class MainGUI extends Application {
 
         DatePicker dogumTarihiPicker = new DatePicker();
         dogumTarihiPicker.setPromptText("Tarih Seçin");
-
-        // TextField dogumYeriField = new TextField(); // KALDIRILDI
-        // dogumYeriField.setPromptText("Örn: İstanbul"); // KALDIRILDI
 
         TextField uyrukField = new TextField();
         uyrukField.setPromptText("Örn: Türkiye");
@@ -289,19 +286,20 @@ public class MainGUI extends Application {
         TextField maasField = new TextField();
         maasField.setPromptText("Örn: 500000");
 
-        // GİZLİ/Varsayılan Alanlar için yine de boş TextField kullanmak daha güvenli:
-        // Bu değerler constructor çağrısında hala gereklidir.
+        // YENİ EKLENEN: Kupa Sayısı Alanı
+        TextField kupaSayisiField = new TextField();
+        kupaSayisiField.setPromptText("Örn: 3");
 
         int row = 0;
         grid.add(new Label("Ad:"), 0, row); grid.add(adField, 1, row++);
         grid.add(new Label("Soyad:"), 0, row); grid.add(soyadField, 1, row++);
         grid.add(new Label("Doğum Tarihi:"), 0, row); grid.add(dogumTarihiPicker, 1, row++);
-        // Doğum Yeri Satırı KALDIRILDI: grid.add(new Label("Doğum Yeri:"), 0, row); grid.add(dogumYeriField, 1, row++);
         grid.add(new Label("Uyruk/Ülke:"), 0, row); grid.add(uyrukField, 1, row++);
         grid.add(new Label("Antrenör Lisansı:"), 0, row); grid.add(lisansField, 1, row++);
         grid.add(new Label("Görev Süresi (Yıl):"), 0, row); grid.add(gorevSuresiField, 1, row++);
         grid.add(new Label("Tercih Edilen Taktik:"), 0, row); grid.add(taktikField, 1, row++);
         grid.add(new Label("Maç Başına Puan Ort.:"), 0, row); grid.add(puanOrtField, 1, row++);
+        grid.add(new Label("Kupa Sayısı:"), 0, row); grid.add(kupaSayisiField, 1, row++); // Grid'e eklendi
         grid.add(new Label("Maaş (TL):"), 0, row); grid.add(maasField, 1, row++);
 
         dialog.getDialogPane().setContent(grid);
@@ -310,62 +308,55 @@ public class MainGUI extends Application {
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 try {
-                    // Metin ve Tarih bilgileri
                     String ad = adField.getText().trim();
                     String soyad = soyadField.getText().trim();
                     LocalDate dogumTarihi = dogumTarihiPicker.getValue();
                     String taktik = taktikField.getText().trim();
-                    // String dogumYeri = dogumYeriField.getText().trim(); // KALDIRILDI
                     String uyruk = uyrukField.getText().trim();
                     String lisans = lisansField.getText().trim();
 
-                    // Sayısal bilgileri parse etmeden önce boşluk kontrolü yapın
                     String puanOrtStr = puanOrtField.getText().trim();
                     String maasStr = maasField.getText().trim();
                     String gorevSuresiStr = gorevSuresiField.getText().trim();
+                    String kupaSayisiStr = kupaSayisiField.getText().trim(); // Alındı
 
-                    // Basit Kontroller (Zorunlu alanlar)
-                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || taktik.isEmpty() || dogumTarihi == null || maasStr.isEmpty() || puanOrtStr.isEmpty() || gorevSuresiStr.isEmpty()) {
+                    // Kontrol
+                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || taktik.isEmpty() ||
+                            dogumTarihi == null || maasStr.isEmpty() || puanOrtStr.isEmpty() ||
+                            gorevSuresiStr.isEmpty() || kupaSayisiStr.isEmpty()) {
                         gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
                         return null;
                     }
 
-                    // Sayısal bilgiler (Parsing yapılır)
                     double puanOrt = Double.parseDouble(puanOrtStr);
                     double maas = Double.parseDouble(maasStr);
                     double gorevSuresi = Double.parseDouble(gorevSuresiStr);
+                    int kupaSayisi = Integer.parseInt(kupaSayisiStr); // Parse edildi
 
-                    // Sabit/Varsayılan Değerler (Constructor gerektirdiği için mantıklı bir değer atanmalı)
                     String tcKimlikNo = "TD_TC_" + ad.charAt(0);
                     LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
                     int lisansYili = LocalDate.now().getYear() - 20;
-                    int kupaSayisi = 0;
                     String eskiTakim = "Bilinmiyor";
                     double bonusHedefi = maas * 0.1;
 
-                    // Yeni TeknikDirektor nesnesini döndür (15 PARAMETRELİ YAPICI KULLANILDI)
                     return new TeknikDirektor(
                             ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
                             lisansYili, taktik, bonusHedefi, eskiTakim, puanOrt, kupaSayisi,
-                            uyruk, lisans, gorevSuresi // dogumYeri parametresi çıkarıldı
+                            uyruk, lisans, gorevSuresi
                     );
 
                 } catch (NumberFormatException e) {
-                    gosterHataAlert("Giriş Hatası", "Maaş, Puan Ortalaması ve Görev Süresi alanlarına sadece sayı giriniz.");
+                    gosterHataAlert("Giriş Hatası", "Maaş, Puan Ortalaması, Kupa Sayısı ve Görev Süresi alanlarına sadece sayı giriniz.");
                     return null;
                 } catch (Exception e) {
                     gosterHataAlert("Genel Hata", "Teknik Direktör eklenirken bir hata oluştu: " + e.getMessage());
-                    e.printStackTrace();
                     return null;
                 }
             }
-            return null; // İptal veya kapatma durumunda null döndür
+            return null;
         });
 
-        // Diyaloğu göster ve sonucu al
         Optional<TeknikDirektor> sonuc = dialog.showAndWait();
-
-        // Sonucu işleme
         sonuc.ifPresent(td -> {
             try {
                 service.teknikDirektorEkle(td);
@@ -375,52 +366,28 @@ public class MainGUI extends Application {
             }
         });
     }
+
+
     private void handleAddNewYardimciAntrenor() {
-        // Dialog penceresi oluşturma
         Dialog<YardimciAntrenor> dialog = new Dialog<>();
         dialog.setTitle("Yardımcı Antrenör Ekle");
         dialog.setHeaderText("Lütfen Yardımcı Antrenörün profil bilgilerini girin.");
-
-        // HATA DÜZELTİLDİ: ButtonType.BUTTON_CANCEL yerine ButtonType.CANCEL kullanıldı
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        // Input Alanları
         TextField adField = new TextField();
-        adField.setPromptText("Örn: İrfan");
-
         TextField soyadField = new TextField();
-        soyadField.setPromptText("Örn: Saraloğlu");
-
         DatePicker dogumTarihiPicker = new DatePicker();
-        dogumTarihiPicker.setPromptText("Tarih Seçin");
-
         TextField uyrukField = new TextField();
-        uyrukField.setPromptText("Örn: Türkiye");
-
         TextField lisansField = new TextField();
-        lisansField.setPromptText("Örn: UEFA B Lisans");
-
         TextField gorevSuresiField = new TextField();
-        gorevSuresiField.setPromptText("Örn: 2.5");
-
-        // Görev/Uzmanlık Seçimi (ChoiceBox)
         ChoiceBox<String> gorevAlaniChoice = new ChoiceBox<>();
-        gorevAlaniChoice.getItems().addAll(
-                "Yardımcı Antrenör",
-                "Kaleci Antrenörü",
-                "Atletik Performans Antrenörü",
-                "Maç Analisti",
-                "Duran Top Antrenörü"
-        );
-        gorevAlaniChoice.setValue("Yardımcı Antrenör"); // Varsayılan değer
-
+        gorevAlaniChoice.getItems().addAll("Yardımcı Antrenör", "Kaleci Antrenörü", "Atletik Performans Antrenörü", "Maç Analisti");
+        gorevAlaniChoice.setValue("Yardımcı Antrenör");
         TextField maasField = new TextField();
-        maasField.setPromptText("Örn: 200000");
 
         int row = 0;
         grid.add(new Label("Ad:"), 0, row); grid.add(adField, 1, row++);
@@ -434,92 +401,48 @@ public class MainGUI extends Application {
 
         dialog.getDialogPane().setContent(grid);
 
-        // OK butonuna basıldığında sonucu işleme
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 try {
-                    // Metin ve Tarih bilgileri
                     String ad = adField.getText().trim();
                     String soyad = soyadField.getText().trim();
                     LocalDate dogumTarihi = dogumTarihiPicker.getValue();
                     String uyruk = uyrukField.getText().trim();
                     String lisans = lisansField.getText().trim();
                     String gorevAlani = gorevAlaniChoice.getValue();
+                    double maas = Double.parseDouble(maasField.getText().trim());
+                    double gorevSuresi = Double.parseDouble(gorevSuresiField.getText().trim());
 
-                    String gorevSuresiStr = gorevSuresiField.getText().trim();
-                    String maasStr = maasField.getText().trim();
-
-                    // Basit Kontroller (Zorunlu alanlar)
-                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || gorevAlani == null || dogumTarihi == null || maasStr.isEmpty() || gorevSuresiStr.isEmpty()) {
-                        gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
-                        return null;
-                    }
-
-                    // Sayısal bilgiler (Parsing yapılır)
-                    double maas = Double.parseDouble(maasStr);
-                    double gorevSuresi = Double.parseDouble(gorevSuresiStr);
-
-                    // Sabit/Varsayılan Değerler
-                    String tcKimlikNo = "YA_TC_" + ad.charAt(0);
-                    LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
-
-                    // Performans Puanları (Basitleştirmek için default 15 atandı)
-                    int defaultPuan = 15;
-
-                    // Yeni YardimciAntrenor nesnesini döndür (16 PARAMETRELİ YAPICI KULLANILDI)
-                    return new YardimciAntrenor(
-                            ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
-                            gorevAlani, gorevSuresi, uyruk, lisans,
-                            defaultPuan, defaultPuan, defaultPuan, defaultPuan, defaultPuan, defaultPuan
-                    );
-
-                } catch (NumberFormatException e) {
-                    gosterHataAlert("Giriş Hatası", "Maaş ve Görev Süresi alanlarına sadece sayı giriniz.");
-                    return null;
+                    return new YardimciAntrenor(ad, soyad, dogumTarihi, "YA_TC_" + ad.charAt(0),
+                            maas, LocalDate.now().minusYears((int)gorevSuresi), gorevAlani, gorevSuresi, uyruk, lisans);
                 } catch (Exception e) {
-                    gosterHataAlert("Genel Hata", "Yardımcı Antrenör eklenirken bir hata oluştu: " + e.getMessage());
-                    e.printStackTrace();
+                    gosterHataAlert("Giriş Hatası", "Lütfen tüm alanları doğru formatta doldurun.");
                     return null;
                 }
             }
-            return null; // İptal veya kapatma durumunda null döndür
+            return null;
         });
 
-        // Diyaloğu göster ve sonucu al
-        Optional<YardimciAntrenor> sonuc = dialog.showAndWait();
-
-        // Sonucu işleme
-        sonuc.ifPresent(ya -> {
-            try {
-                service.yardimciAntrenorEkle(ya);
-                showMessage("Yardımcı Antrenör " + ya.getAd() + " " + ya.getSoyad() + " başarıyla eklendi.", Formatlayici.MAVI);
-            } catch (Exception e) {
-                gosterHataAlert("Ekleme Hatası", e.getMessage());
-            }
-        });
+        dialog.showAndWait().ifPresent(service::yardimciAntrenorEkle);
     }
 
 
-    // MainGUI.java içindeki metot:
     private void handleAddNewFizyoterapist() {
-        // Dialog penceresi oluşturma
         Dialog<Fizyoterapist> dialog = new Dialog<>();
         dialog.setTitle("Fizyoterapist Ekle");
         dialog.setHeaderText("Lütfen Fizyoterapistin profil bilgilerini girin.");
-
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20, 150, 10, 10));
 
-        // Input Alanları
+        // Örnekli Input Alanları
         TextField adField = new TextField();
-        adField.setPromptText("Ad");
+        adField.setPromptText("Örn: Ahmet");
 
         TextField soyadField = new TextField();
-        soyadField.setPromptText("Soyad");
+        soyadField.setPromptText("Örn: Yılmaz");
 
         DatePicker dogumTarihiPicker = new DatePicker();
         dogumTarihiPicker.setPromptText("Tarih Seçin");
@@ -532,9 +455,6 @@ public class MainGUI extends Application {
 
         TextField gorevSuresiField = new TextField();
         gorevSuresiField.setPromptText("Örn: 4.0");
-
-        // TextField sertifikaField = new TextField(); // KALDIRILDI
-        // sertifikaField.setPromptText("Örn: SERT_001"); // KALDIRILDI
 
         TextField uzmanlikField = new TextField();
         uzmanlikField.setPromptText("Örn: Spor Ortopedisi");
@@ -552,77 +472,49 @@ public class MainGUI extends Application {
         grid.add(new Label("Mezuniyet Üni.:"), 0, row); grid.add(universiteField, 1, row++);
         grid.add(new Label("Görev Süresi (Yıl):"), 0, row); grid.add(gorevSuresiField, 1, row++);
         grid.add(new Label("Uzmanlık Alanı:"), 0, row); grid.add(uzmanlikField, 1, row++);
-        // Sertifika Satırı KALDIRILDI
         grid.add(new Label("Maaş (TL):"), 0, row); grid.add(maasField, 1, row++);
         grid.add(masajYetkisiCheck, 1, row++);
 
         dialog.getDialogPane().setContent(grid);
 
-        // OK butonuna basıldığında sonucu işleme
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == ButtonType.OK) {
                 try {
-                    // Metin ve Tarih bilgileri
                     String ad = adField.getText().trim();
                     String soyad = soyadField.getText().trim();
                     LocalDate dogumTarihi = dogumTarihiPicker.getValue();
                     String uyruk = uyrukField.getText().trim();
                     String universite = universiteField.getText().trim();
-                    // String sertifika = ""; // KALDIRILDI
                     String uzmanlik = uzmanlikField.getText().trim();
                     boolean masajYetkisi = masajYetkisiCheck.isSelected();
 
-                    String gorevSuresiStr = gorevSuresiField.getText().trim();
                     String maasStr = maasField.getText().trim();
+                    String gorevSuresiStr = gorevSuresiField.getText().trim();
 
-                    // Basit Kontroller (Zorunlu alanlar)
-                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || dogumTarihi == null || universite.isEmpty() || gorevSuresiStr.isEmpty() || maasStr.isEmpty()) {
+                    if (ad.isEmpty() || soyad.isEmpty() || uyruk.isEmpty() || dogumTarihi == null ||
+                            universite.isEmpty() || maasStr.isEmpty() || gorevSuresiStr.isEmpty()) {
                         gosterHataAlert("Eksik Bilgi", "Lütfen tüm zorunlu alanları doldurun.");
                         return null;
                     }
 
-                    // Sayısal bilgiler (Parsing yapılır)
                     double maas = Double.parseDouble(maasStr);
                     double gorevSuresi = Double.parseDouble(gorevSuresiStr);
 
-                    // Sabit/Varsayılan Değerler (Constructor gerektirdiği için)
-                    String tcKimlikNo = "FIZYO_TC_" + ad.charAt(0);
-                    LocalDate iseBaslamaTarihi = LocalDate.of(LocalDate.now().getYear() - (int)Math.ceil(gorevSuresi), 1, 1);
-
-                    // Performans Puanları (Basitleştirmek için default 15 atandı)
-                    int defaultPuan = 15;
-
-                    // Sertifika No parametresi artık yok, sabit değer atandı
-                    String varsayilanSertifikaNo = "YOK";
-
-                    // Yeni Fizyoterapist nesnesini döndür (YENİ 15 PARAMETRELİ YAPICI KULLANILDI)
-                    return new Fizyoterapist(
-                            ad, soyad, dogumTarihi, tcKimlikNo, maas, iseBaslamaTarihi,
-                            uzmanlik, masajYetkisi, // sertifikaNo çıkarıldı
-                            uyruk, universite, gorevSuresi,
-                            defaultPuan, defaultPuan, defaultPuan, defaultPuan
-                    );
-
+                    return new Fizyoterapist(ad, soyad, dogumTarihi, "FIZYO_TC_" + ad.charAt(0),
+                            maas, LocalDate.now().minusYears((int)Math.ceil(gorevSuresi)),
+                            uzmanlik, masajYetkisi, uyruk, universite, gorevSuresi);
                 } catch (NumberFormatException e) {
                     gosterHataAlert("Giriş Hatası", "Maaş ve Görev Süresi alanlarına sadece sayı giriniz.");
                     return null;
-                } catch (Exception e) {
-                    gosterHataAlert("Genel Hata", "Fizyoterapist eklenirken bir hata oluştu: " + e.getMessage());
-                    e.printStackTrace();
-                    return null;
                 }
             }
-            return null; // İptal veya kapatma durumunda null döndür
+            return null;
         });
 
-        // Diyaloğu göster ve sonucu al
-        Optional<Fizyoterapist> sonuc = dialog.showAndWait();
-
-        // Sonucu işleme
-        sonuc.ifPresent(f -> {
+        dialog.showAndWait().ifPresent(f -> {
             try {
                 service.fizyoterapistEkle(f);
-                showMessage("Fizyoterapist " + f.getAd() + " " + f.getSoyad() + " başarıyla eklendi (ID: " + f.getId() + ").", Formatlayici.MAVI);
+                showMessage("Fizyoterapist " + f.getAd() + " " + f.getSoyad() + " başarıyla eklendi.", Formatlayici.MAVI);
             } catch (Exception e) {
                 gosterHataAlert("Ekleme Hatası", e.getMessage());
             }

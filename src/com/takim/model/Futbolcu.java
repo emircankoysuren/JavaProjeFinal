@@ -91,10 +91,27 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir {
 
     @Override
     public String toString() {
-        return "Futbolcu >> " + super.toString() +
-                ", Forma No: " + formaNo +
-                ", Mevki: " + mevki +
-                ", Ülke: " + ulke;
+        return String.format(
+                "==========================================================\n" +
+                        "| %-20s : %s\n" +
+                        "----------------------------------------------------------\n" +
+                        "| %-20s : %s %s\n" +
+                        "| %-20s : %d\n" +
+                        "| %-20s : %s\n" +
+                        "| %-20s : %s\n" +
+                        "| %-20s : %d\n" +
+                        "| %-20s : %d\n" +
+                        "| %-20s : %d\n" +
+                        "==========================================================",
+                "ÜNVAN", "FUTBOLCU",
+                "Ad Soyad", getAd(), getSoyad(),
+                "Forma No", formaNo,
+                "Mevki", mevki,
+                "Uyruk", ulke,
+                "Gol Sayısı", golSayisi,
+                "Asist Sayısı", asistSayisi,
+                "Toplam Katkı", skorKatkisiHesapla()
+        );
     }
 
     public String bilgiGetir() {
