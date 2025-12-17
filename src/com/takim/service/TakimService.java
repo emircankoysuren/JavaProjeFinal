@@ -199,4 +199,25 @@ public class TakimService {
     public List<TeknikDirektor> getTeknikDirektorler() { return teknikDirektorler; }
     public List<YardimciAntrenor> getYardimciAntrenorler() { return yardimciAntrenorler; }
     public List<Fizyoterapist> getFizyoterapistler() { return fizyoterapistler; }
+    public String yillikFinansalAnalizRaporu() {
+        List<Calisan> tumEkip = new ArrayList<>();
+        tumEkip.addAll(getTeknikDirektorler());
+        tumEkip.addAll(getYardimciAntrenorler());
+        tumEkip.addAll(getFizyoterapistler());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(Formatlayici.renklendir("--- KULÜP FİNANSAL VERİMLİLİK ANALİZİ ---\n", Formatlayici.MAVI));
+
+        for (Calisan c : tumEkip) {
+            // Interface metotlarını burada bizzat "kullanıyoruz"
+            double tazminat = c.kidemTazminatiHesapla();
+            String durum = c.maliyetDurumuAnaliziGetir();
+            double brut = c.yillikBrutMaasGetir();
+
+            sb.append(String.format("%s %s (%s)\n", c.getAd(), c.getSoyad(), durum));
+            sb.append(String.format("> Yıllık Brüt: %.2f TL | Olası Tazminat: %.2f TL\n", brut, tazminat));
+            sb.append("----------------------------------------------------------\n");
+        }
+        return sb.toString();
+    }
 }

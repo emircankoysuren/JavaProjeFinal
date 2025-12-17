@@ -30,6 +30,21 @@ public class YardimciAntrenor extends Calisan {
     @Override public double yillikMaasArtisiOraniGetir() { return hizmetYiliHesapla() > 3 ? 0.07 : 0.05; }
     @Override public double vergiKesintisiHesapla(Month ay) { return ay.getValue() >= 10 ? maasHesapla() * 0.25 : maasHesapla() * 0.18; }
     @Override public double yillikBrutMaasGetir() { return (maasHesapla() * 12) + (hizmetYiliHesapla() * 500); }
+    @Override
+    public double verimlilikPuaniHesapla(int performans) {
+        // Yardımcı antrenörlerde saha içi tecrübe çarpanı kullanılır
+        return super.verimlilikPuaniHesapla(performans) * (1 + (getSahaIciSure() / 20));
+    }
+
+    @Override
+    public String butceDurumuGetir() {
+        return getSahaIciSure() > 10 ? "Kıdemli Antrenör Bütçesi" : "Gelişim Antrenörü";
+    }
+
+    @Override
+    public String maliyetDurumuAnaliziGetir() {
+        return "Lisans Tipi: " + getAntrenorlukLisansi() + " Analizi";
+    }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     @Override

@@ -40,6 +40,22 @@ public class Fizyoterapist extends Calisan implements Serializable {
     @Override public double yillikMaasArtisiOraniGetir() { return this.uzmanlikAlani.toLowerCase().contains("spor") ? 0.12 : 0.08; }
     @Override public double vergiKesintisiHesapla(Month ay) { return ay == Month.JANUARY ? maasHesapla() * 0.15 : maasHesapla() * 0.20; }
     @Override public double yillikBrutMaasGetir() { return (maasHesapla() * 12) + ((double)getTecrubeYili() * 1000); }
+    @Override
+    public double kidemTazminatiHesapla() {
+        // Fizyoterapistlerde uzmanlık alanına göre ek tazminat çarpanı
+        double ek = getUzmanlikAlani().toLowerCase().contains("spor") ? 5000 : 2000;
+        return super.kidemTazminatiHesapla() + ek;
+    }
+
+    @Override
+    public String butceDurumuGetir() {
+        return isSporMasajYetkisi() ? "Kritik Sağlık Personeli (Bütçe Dahili)" : "Destek Personel";
+    }
+
+    @Override
+    public String maliyetDurumuAnaliziGetir() {
+        return "Uzmanlık: " + getUzmanlikAlani() + " - Sağlık Bütçesi Analizi";
+    }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     @Override

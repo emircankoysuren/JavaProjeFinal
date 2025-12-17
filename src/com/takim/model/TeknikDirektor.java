@@ -50,6 +50,21 @@ public class TeknikDirektor extends Calisan implements Serializable {
     @Override public double yillikMaasArtisiOraniGetir() { return hizmetYiliHesapla() > 5 ? 0.10 : 0.05; }
     @Override public double vergiKesintisiHesapla(Month ay) { return maasHesapla() * 0.20; }
     @Override public double yillikBrutMaasGetir() { return maasHesapla() * 12; }
+    @Override
+    public double kidemTazminatiHesapla() {
+        // Teknik direktörlerin tazminatına kupa primi eklenir
+        return super.kidemTazminatiHesapla() + (getKupaSayisi() * 10000);
+    }
+
+    @Override
+    public String butceDurumuGetir() {
+        return getMaas() > 400000 ? "Yıldız Kategori (Yüksek)" : "Standart Teknik Kadro";
+    }
+
+    @Override
+    public String maliyetDurumuAnaliziGetir() {
+        return String.format("TD Analizi: %.2f Puan Ortalaması ile Maliyet: %.2f", getPuanOrt(), getMaas());
+    }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     // GÜNCELLENMİŞ toString() METODU (ID satırı kaldırıldı)

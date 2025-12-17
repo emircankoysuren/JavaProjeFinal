@@ -33,9 +33,44 @@ public abstract class Calisan extends Kisi implements MaasHesaplanabilir, Raporl
     public abstract double primHesapla(int performansPuani);
 
     // MaasHesaplanabilir arayuzunden gelen zorunlu abstract metotlar
-    @Override public abstract double yillikMaasArtisiOraniGetir();
-    @Override public abstract double vergiKesintisiHesapla(Month ay);
-    @Override public abstract double yillikBrutMaasGetir();
+    @Override
+    public double kidemTazminatiHesapla() {
+        // Maaş * Hizmet Yılı * 1.5 katsayısı
+        return getMaas() * hizmetYiliHesapla() * 1.5;
+    }
+
+    @Override
+    public double verimlilikPuaniHesapla(int performans) {
+        if (getMaas() <= 0) return 0;
+        // Maaş başına düşen performans (verimlilik) puanı
+        return (performans * 1000.0) / getMaas();
+    }
+
+    @Override
+    public String butceDurumuGetir() {
+        // Koşullu işleç (Ternary Operator) kullanımı - Gereksinim 9.120
+        return getMaas() > 250000 ? "YÜKSEK BÜTÇELİ" : "EKONOMİK BÜTÇELİ";
+    }
+
+    @Override
+    public String maliyetDurumuAnaliziGetir() {
+        return getMaas() > 300000 ? "KRİTİK MALİYET" : "STANDART MALİYET";
+    }
+
+    @Override
+    public double yillikMaasArtisiOraniGetir() {
+        return 0.15; // Sabit %15 artış oranı
+    }
+
+    @Override
+    public double vergiKesintisiHesapla(java.time.Month ay) {
+        return getMaas() * 0.20; // Sabit %20 vergi kesintisi
+    }
+
+    @Override
+    public double yillikBrutMaasGetir() {
+        return getMaas() * 12 * 1.18; // 12 ay maaş + %18 SGK/Vergi payı
+    }
 
     // Getter/Setter - Hata veren getMaas metodu buradadır
     public double getMaas() { return maas; }
