@@ -1,0 +1,11 @@
+========= KULÜP FİNANSAL ANALİZ RAPORU =========
+
+► Futbolcu Maaş Gideri         : 0,00M €
+► Dağıtılan Toplam Prim        : 0,000M €
+► Teknik Direktör Gideri       : 0 €
+► Antrenör Kadrosu Gideri      : 0 €
+► Fizyoterapist Gideri         : 0 €
+
+------------------------------------------------
+TOPLAM KULÜP GİDERİ (Net): 0 €
+================================================

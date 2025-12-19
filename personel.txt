@@ -1,5 +1,0 @@
-YardimciAntrenor|Ismail|Şenol|10.03.1985|TRA2|200000.0|01.07.2023|Hucum|1000.5|15|10|17|16|18|19
-YardimciAntrenor|Ismail|Şenol|10.03.1985|TRA1|200000.0|01.07.2023|Hucum|1000.5|15|10|17|16|18|19
-TeknikDirektor|Okan|Buruk|22.01.1977|TRD1|500000.0|16.06.2022|2012|4-3-3|1000.0|Başakşehir|2.0|15
-Futbolcu|Yeni|Oyuncu1|01.01.2000|DYN51|51|ORTASAHA|0|0
-Futbolcu|Yeni|Oyuncu1|01.01.2000|DYN51|51|ORTASAHA|0|0

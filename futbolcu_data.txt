@@ -1,3 +1,0 @@
-Ad,Soyad,DogumTarihi,TCKimlik,FormaNo,Mevki,Gol,Asist
-Mauro,Icardi,19.02.1993,TC1,9,FORVET,5,15
-Emir,Köysüren,03.12.2025,TR99,99,FORVET,5,7
