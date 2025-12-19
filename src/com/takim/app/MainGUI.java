@@ -22,6 +22,8 @@ import java.util.Locale;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 
+
+
 /**
  * Projenin ana GUI sınıfı.
  * GÜNCELLEME: Haftalık performans ortalaması (hardcoded) kaldırıldı.
@@ -39,6 +41,8 @@ public class MainGUI extends Application {
         grid.setPadding(new Insets(20));
         grid.setVgap(15);
         grid.setHgap(15);
+
+
 
         // Başlık (0. Satır, 2 Sütun Kaplar)
         Label title = new Label(TAKIM_ADI + " KADRO VE PERFORMANS YONETİMİ");
@@ -112,6 +116,7 @@ public class MainGUI extends Application {
         Scene scene = new Scene(grid, 800, 700);
         primaryStage.setScene(scene);
         primaryStage.show();
+
     }
 
 
