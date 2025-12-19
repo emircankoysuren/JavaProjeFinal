@@ -3,8 +3,6 @@ package com.takim.app;
 import com.takim.service.TakimService;
 import com.takim.model.*;
 import com.takim.util.Formatlayici;
-import com.takim.exception.GecersizFormaNoException;
-
 
 import javafx.application.Application;
 import javafx.geometry.Insets;
@@ -14,20 +12,19 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.SimpleObjectProperty;
 
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Locale;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 
 /**
  * Projenin ana GUI sınıfı.
- * Bölüm 11 (Menü Tasarımı) ve Bölüm 12 (JavaFX GUI Bonus) gereksinimlerini karşılar.
+ * GÜNCELLEME: Haftalık performans ortalaması (hardcoded) kaldırıldı.
  */
 public class MainGUI extends Application {
 
@@ -50,40 +47,34 @@ public class MainGUI extends Application {
         messageArea.setEditable(false);
         messageArea.setPrefHeight(300);
         messageArea.setWrapText(true);
-        messageArea.setStyle("-fx-font-family: 'Monospaced';");
+        messageArea.setStyle("-fx-font-family: 'Consolas', 'Monospaced'; -fx-font-size: 13px;");
         GridPane.setConstraints(messageArea, 0, 5, 2, 2);
 
-        // 1. Personel Ekleme Butonu
         Button addPersonnelButton = new Button("1. Yeni Personel Ekle (Seçim)");
         addPersonnelButton.setMaxWidth(Double.MAX_VALUE);
         addPersonnelButton.setOnAction(e -> handleNewPersonnelSelection());
         GridPane.setConstraints(addPersonnelButton, 0, 1);
 
-        // 2. Listeleme Butonu
         Button listPlayersButton = new Button("2. Çalışan Listesini Görüntüle");
         listPlayersButton.setMaxWidth(Double.MAX_VALUE);
         listPlayersButton.setOnAction(e -> handleDisplayPersonnelSelection());
         GridPane.setConstraints(listPlayersButton, 1, 1);
 
-        // 3. Sıralama Butonu
         Button sortGoalsButton = new Button("3. Skor Katkısı Sıralaması");
         sortGoalsButton.setMaxWidth(Double.MAX_VALUE);
         sortGoalsButton.setOnAction(e -> handleSkorKatkisiSiralamasi());
         GridPane.setConstraints(sortGoalsButton, 0, 2);
 
-        // 4. Silme Butonu
         Button deletePlayerButton = new Button("4. Personel Sil");
         deletePlayerButton.setMaxWidth(Double.MAX_VALUE);
         deletePlayerButton.setOnAction(e -> personelSilmeEkraniGoster());
         GridPane.setConstraints(deletePlayerButton, 1, 2);
 
-        // 5. Haftalık Program Butonu (Döngü ve Dizi Gereksinimi)
-        Button weeklyProgramButton = new Button("5. Haftalık Antrenman Programı");
+        Button weeklyProgramButton = new Button("5. Haftalık Antrenman İşlemleri");
         weeklyProgramButton.setMaxWidth(Double.MAX_VALUE);
-        weeklyProgramButton.setOnAction(e -> handleWeeklyProgram());
+        weeklyProgramButton.setOnAction(e -> handleTrainingMenuSelection());
         GridPane.setConstraints(weeklyProgramButton, 0, 3);
 
-        // 6. Performans Güncelleme Butonu (Forma No ile)
         Button updatePerformanceButton = new Button("6. Performans Verisi Gir (Gol/Asist)");
         updatePerformanceButton.setMaxWidth(Double.MAX_VALUE);
         updatePerformanceButton.setOnAction(e -> handleUpdatePerformance());
@@ -91,7 +82,7 @@ public class MainGUI extends Application {
 
         primaryStage.setOnCloseRequest(event -> {
             service.tumVerileriKaydet();
-            System.out.println("Uygulama kapatılıyor. Veriler kaydedildi.");
+            System.out.println("Veriler kaydedildi.");
         });
 
         grid.getChildren().addAll(title, addPersonnelButton, listPlayersButton,
@@ -103,20 +94,172 @@ public class MainGUI extends Application {
         primaryStage.show();
     }
 
-    // --- İŞLEYİCİ METOTLAR (HANDLERS) ---
+    // --- YENİ EKLENEN/GÜNCELLENEN METOTLAR (5. BUTON İÇİN) ---
 
-    private void handleWeeklyProgram() {
-        service.sistemBütünlükKontrolü(); // while/do-while çalıştırır
-        String program = service.haftalikProgramiGoster(); // Çok boyutlu dizi/for çalıştırır
-        double ortalama = service.antrenmanPuanOrtalamasiHesapla();
+    // 1. Adım: Menü Seçimi
+    private void handleTrainingMenuSelection() {
+        List<String> choices = Arrays.asList("1. Haftalık Antrenman Gir", "2. Haftalık Antrenman Görüntüle");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(1), choices);
+        dialog.setTitle("Antrenman Yönetimi");
+        dialog.setHeaderText("Yapmak istediğiniz işlemi seçiniz:");
+        dialog.setContentText("İşlem:");
 
+        dialog.showAndWait().ifPresent(selection -> {
+            if (selection.contains("1")) {
+                handleEnterTrainingProgram(); // Veri giriş ekranını aç
+            } else {
+                handleDisplayWeeklyProgram(); // Mevcut programı göster
+            }
+        });
+    }
+
+    // 2. Adım: Veri Giriş Ekranı (Yeni Pencere)
+    private void handleEnterTrainingProgram() {
+        Dialog<String[]> dialog = new Dialog<>();
+        dialog.setTitle("Haftalık Antrenman Programı Girişi");
+        dialog.setHeaderText("Her gün için antrenman aktivitesini giriniz.");
+
+        ButtonType saveButtonType = new ButtonType("Kaydet", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10); grid.setVgap(10);
+        grid.setPadding(new Insets(20));
+
+        String[] gunler = service.getGunler();
+        String[] mevcutAktiviteler = service.getHaftalikAktiviteler();
+        List<TextField> inputs = new ArrayList<>();
+
+        // 7 Gün için dinamik olarak Label ve TextField oluştur
+        for (int i = 0; i < gunler.length; i++) {
+            grid.add(new Label(gunler[i] + ":"), 0, i);
+            TextField tf = new TextField(mevcutAktiviteler[i]); // Mevcut değeri varsayılan yap
+            tf.setPromptText("Örn: Kondisyon");
+            inputs.add(tf);
+            grid.add(tf, 1, i);
+        }
+
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                // Tüm girdileri topla
+                String[] yeniProgram = new String[7];
+                for (int i = 0; i < 7; i++) {
+                    String val = inputs.get(i).getText().trim();
+                    yeniProgram[i] = val.isEmpty() ? "Dinlenme" : val; // Boşsa Dinlenme yaz
+                }
+                return yeniProgram;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(yeniProgram -> {
+            service.haftalikProgramGuncelle(yeniProgram);
+            showMessage("Haftalık antrenman programı başarıyla güncellendi.", Formatlayici.YESIL);
+            handleDisplayWeeklyProgram(); // Kaydettikten sonra otomatik göster
+        });
+    }
+
+    // 3. Adım: Programı Görüntüle (GÜNCELLENDİ: ORTALAMA SİLİNDİ)
+    private void handleDisplayWeeklyProgram() {
+        service.sistemBütünlükKontrolü();
+        String program = service.haftalikProgramiGoster();
+        // Ortalama hesaplama ve yazdırma satırları kaldırıldı.
         messageArea.setText(cleanAnsi(program));
-        messageArea.appendText("\n" + cleanAnsi(Formatlayici.renklendir(
-                "Sistem Analizi: Haftalık Performans Ortalaması: " + String.format("%.2f", ortalama), Formatlayici.YESIL)));
+    }
+
+    // --- DİĞER İŞLEYİCİ METOTLAR (MEVCUT KODLAR) ---
+
+    private void handleDisplayPersonnelSelection() {
+        List<String> choices = Arrays.asList("1. Futbolcu", "2. Teknik Direktör", "3. Yardımcı Antrenör", "4. Fizyoterapist");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
+        dialog.showAndWait().ifPresent(this::displayFilteredPersonnel);
+    }
+
+    private void displayFilteredPersonnel(String selection) {
+        StringBuilder sb = new StringBuilder();
+
+        if (selection.contains("1")) { // FUTBOLCU
+            List<Futbolcu> liste = service.getFutbolcuKadrosu();
+            sb.append("======================================================================\n");
+            sb.append(String.format("%-30s\n", "                  FUTBOLCU KADRO LİSTESİ"));
+            sb.append("======================================================================\n\n");
+
+            if(liste.isEmpty()) {
+                sb.append("Kayıtlı futbolcu bulunmamaktadır.\n");
+            } else {
+                listeleMevkiGrubu(sb, liste, "KALECİLER", "Kaleci");
+                listeleMevkiGrubu(sb, liste, "DEFANSLAR", "Defans");
+                listeleMevkiGrubu(sb, liste, "ORTA SAHALAR", "Ortasaha");
+                listeleMevkiGrubu(sb, liste, "FORVETLER", "Forvet");
+            }
+
+        } else if (selection.contains("2")) { // TEKNİK DİREKTÖR
+            List<TeknikDirektor> liste = service.getTeknikDirektorler();
+            sb.append("======================================================================\n");
+            sb.append("                  TEKNİK DİREKTÖR KADROSU\n");
+            sb.append("======================================================================\n\n");
+
+            for(TeknikDirektor t : liste) {
+                sb.append(String.format("► %s %s (%s)\n", t.getAd().toUpperCase(), t.getSoyad().toUpperCase(), t.getUyruk()));
+                sb.append(String.format("  Performans : %s\n", t.getPerformansDetayi()));
+                sb.append(String.format("  Durum      : %s (Puan: %.1f)\n", t.performansDurumuAnalizi(), t.performansPuaniniHesapla()));
+                String formatliMaas = String.format(Locale.GERMANY, "%,.0f €", t.getMaas());
+                sb.append(String.format("  Maaş       : %s\n", formatliMaas));
+                sb.append("----------------------------------------------------------------------\n");
+            }
+        } else {
+            List<? extends Kisi> liste;
+            String baslik;
+            if(selection.contains("3")) { liste = service.getYardimciAntrenorler(); baslik = "YARDIMCI ANTRENÖRLER"; }
+            else { liste = service.getFizyoterapistler(); baslik = "FİZYOTERAPİSTLER"; }
+
+            sb.append("======================================================================\n");
+            sb.append("                  " + baslik + "\n");
+            sb.append("======================================================================\n\n");
+
+            for(Kisi k : liste) {
+                sb.append("► " + k.getAd() + " " + k.getSoyad() + "\n");
+                if(k instanceof Calisan) {
+                    Calisan c = (Calisan) k;
+                    String formatliMaas = String.format(Locale.GERMANY, "%,.0f €", c.getMaas());
+                    sb.append("  Maaş: " + formatliMaas + "\n");
+                }
+                sb.append("----------------------------------------------------------------------\n");
+            }
+        }
+
+        messageArea.setText(sb.toString());
+    }
+
+    private void listeleMevkiGrubu(StringBuilder sb, List<Futbolcu> anaListe, String baslik, String arananMevki) {
+        sb.append(String.format("=== %s ===\n", baslik));
+        boolean oyuncuVar = false;
+        for (Futbolcu f : anaListe) {
+            if (f.getMevki().equalsIgnoreCase(arananMevki)) {
+                oyuncuVar = true;
+                sb.append(String.format("► AD SOYAD   : %s %s\n", f.getAd().toUpperCase(), f.getSoyad().toUpperCase()));
+                sb.append(String.format("  Forma No   : %-5d |  Mevki : %s\n", f.getFormaNo(), f.getMevki()));
+                sb.append(String.format("  Uyruk      : %-15s\n", f.getUlke()));
+
+                String formatliMaas = String.format(Locale.GERMANY, "%,.0f €", f.getMaas());
+                sb.append(String.format("  Maaş       : %s\n", formatliMaas));
+
+                sb.append(String.format("  İstatistik : %s\n", f.getPerformansDetayi()));
+                sb.append(String.format("  Analiz     : %s (Skor: %.0f)\n", f.performansDurumuAnalizi(), f.performansPuaniniHesapla()));
+
+                sb.append("----------------------------------------------------------------------\n");
+            }
+        }
+        if (!oyuncuVar) {
+            sb.append("  (Bu mevkide kayıtlı oyuncu yok)\n");
+            sb.append("----------------------------------------------------------------------\n");
+        }
+        sb.append("\n");
     }
 
     private void handleUpdatePerformance() {
-        // 1. Adım: Forma No Girişi
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Performans Güncelleme");
         dialog.setHeaderText("Futbolcu Seçimi");
@@ -126,26 +269,20 @@ public class MainGUI extends Application {
         result.ifPresent(formaNoStr -> {
             try {
                 int formaNo = Integer.parseInt(formaNoStr.trim());
-
-                // 2. Adım: Gol Sayısı Girişi (Başlık ve Header güncellendi)
                 TextInputDialog golDialog = new TextInputDialog("0");
-                golDialog.setTitle("Gol Verisi"); // Pencere başlığı
-                golDialog.setHeaderText("Forma No: " + formaNo + " - Gol Sayısı"); // Üst açıklama
+                golDialog.setTitle("Gol Verisi");
+                golDialog.setHeaderText("Forma No: " + formaNo + " - Gol Sayısı");
                 golDialog.setContentText("Bu hafta kaç gol attı?");
-
                 Optional<String> golRes = golDialog.showAndWait();
                 int gol = Integer.parseInt(golRes.orElse("0"));
 
-                // 3. Adım: Asist Sayısı Girişi (Başlık ve Header güncellendi)
                 TextInputDialog asistDialog = new TextInputDialog("0");
-                asistDialog.setTitle("Asist Verisi"); // Pencere başlığı
-                asistDialog.setHeaderText("Forma No: " + formaNo + " - Asist Sayısı"); // Üst açıklama
+                asistDialog.setTitle("Asist Verisi");
+                asistDialog.setHeaderText("Forma No: " + formaNo + " - Asist Sayısı");
                 asistDialog.setContentText("Bu hafta kaç asist yaptı?");
-
                 Optional<String> asistRes = asistDialog.showAndWait();
                 int asist = Integer.parseInt(asistRes.orElse("0"));
 
-                // Servis katmanında işlemi gerçekleştir
                 if (service.performansVerisiGir(formaNo, gol, asist)) {
                     showMessage("Forma No " + formaNo + " başarıyla güncellendi.", Formatlayici.YESIL);
                 } else {
@@ -168,90 +305,49 @@ public class MainGUI extends Application {
         });
     }
 
-    private void handleDisplayPersonnelSelection() {
-        List<String> choices = Arrays.asList("1. Futbolcu", "2. Teknik Direktör", "3. Yardımcı Antrenör", "4. Fizyoterapist");
-        ChoiceDialog<String> dialog = new ChoiceDialog<>(choices.get(0), choices);
-        dialog.showAndWait().ifPresent(this::displayFilteredPersonnel);
-    }
-
-    private void displayFilteredPersonnel(String selection) {
-        List<? extends Kisi> liste = new ArrayList<>();
-        if (selection.contains("1")) liste = service.getFutbolcuKadrosu();
-        else if (selection.contains("2")) liste = service.getTeknikDirektorler();
-        else if (selection.contains("3")) liste = service.getYardimciAntrenorler();
-        else if (selection.contains("4")) liste = service.getFizyoterapistler();
-
-        messageArea.setText(cleanAnsi(service.listeYazdir(liste)));
-    }
-
-    // --- YARDIMCI GÖRSEL METOTLAR ---
-
     private void handleAddNewFutbolcu() {
-        // 1. Dialog Penceresini Yapılandır
         Dialog<Futbolcu> dialog = new Dialog<>();
         dialog.setTitle("Yeni Futbolcu Kaydı");
-        dialog.setHeaderText("Futbolcu bilgilerini giriniz.");
-
+        dialog.setHeaderText("Futbolcu bilgilerini ve maaşını giriniz.");
         ButtonType saveButtonType = new ButtonType("Kaydet", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
-        // 2. Giriş Alanlarını Tasarla
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Ad ve Soyad Örnek Yazıları (Prompt Text)
-        TextField adField = new TextField();
-        adField.setPromptText("Örn: Mauro");
-        TextField soyadField = new TextField();
-        soyadField.setPromptText("Örn: Icardi");
-
-        // Doğum Tarihi ve Ülke Örneği
+        TextField adField = new TextField(); adField.setPromptText("Örn: Mauro");
+        TextField soyadField = new TextField(); soyadField.setPromptText("Örn: Icardi");
         DatePicker dogumTarihiPicker = new DatePicker(LocalDate.of(1993, 2, 19));
-        TextField ulkeField = new TextField();
-        ulkeField.setPromptText("Örn: Arjantin");
-
-        // Forma No (Blurlu İpucu)
-        TextField fNoField = new TextField();
-        fNoField.setPromptText("1-99 arası");
-
-        // Mevki Seçim Kutusu (ComboBox)
+        TextField ulkeField = new TextField(); ulkeField.setPromptText("Örn: Arjantin");
+        TextField fNoField = new TextField(); fNoField.setPromptText("1-99 arası");
         ComboBox<String> mevkiBox = new ComboBox<>();
         mevkiBox.getItems().addAll("Kaleci", "Defans", "Ortasaha", "Forvet");
-        mevkiBox.setValue("Forvet"); // Varsayılan değer
+        mevkiBox.setValue("Forvet");
+        TextField maasField = new TextField(); maasField.setPromptText("Örn: 10000000");
 
-        // Alanları Yerleştir
         grid.add(new Label("Ad:"), 0, 0);          grid.add(adField, 1, 0);
         grid.add(new Label("Soyad:"), 0, 1);       grid.add(soyadField, 1, 1);
         grid.add(new Label("Doğum Tarihi:"), 0, 2); grid.add(dogumTarihiPicker, 1, 2);
         grid.add(new Label("Ülke:"), 0, 3);        grid.add(ulkeField, 1, 3);
         grid.add(new Label("Forma No:"), 0, 4);    grid.add(fNoField, 1, 4);
         grid.add(new Label("Mevki:"), 0, 5);       grid.add(mevkiBox, 1, 5);
+        grid.add(new Label("Maaş (€):"), 0, 6);    grid.add(maasField, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
 
-        // 3. Veriyi Nesneye Dönüştür ve Hataları Yakala (Try-Catch Çözümü)
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButtonType) {
                 try {
                     int formaNo = Integer.parseInt(fNoField.getText().trim());
-
-                    // Constructor parametrelerini eksiksiz göndererek Argument hatasını çözer
+                    double maas = Double.parseDouble(maasField.getText().trim());
                     return new Futbolcu(
-                            adField.getText().trim(),
-                            soyadField.getText().trim(),
-                            dogumTarihiPicker.getValue(),
-                            "TC-" + System.currentTimeMillis() % 1000,
-                            formaNo,
-                            mevkiBox.getValue(),
-                            0, 0,
-                            ulkeField.getText().trim()
+                            adField.getText().trim(), soyadField.getText().trim(), dogumTarihiPicker.getValue(),
+                            "TC-" + System.currentTimeMillis() % 1000, formaNo, mevkiBox.getValue(),
+                            0, 0, ulkeField.getText().trim(), maas
                     );
                 } catch (NumberFormatException e) {
-                    gosterHataAlert("Giriş Hatası", "Forma numarası sadece sayı olmalıdır!");
-                } catch (com.takim.exception.GecersizFormaNoException e) {
-                    // Görseldeki "Unhandled exception" hatasını gideren kritik blok
-                    gosterHataAlert("Kural İhlali", e.getMessage());
+                    gosterHataAlert("Giriş Hatası", "Forma numarası ve Maaş sadece sayı olmalıdır!");
                 } catch (Exception e) {
                     gosterHataAlert("Hata", "Lütfen tüm alanları kontrol edin.");
                 }
@@ -259,11 +355,11 @@ public class MainGUI extends Application {
             return null;
         });
 
-        // 4. Sonucu Al ve Servise Kaydet
         dialog.showAndWait().ifPresent(futbolcu -> {
             try {
                 service.futbolcuEkle(futbolcu);
-                showMessage(futbolcu.getAd() + " " + futbolcu.getSoyad() + " kadroya eklendi.", Formatlayici.YESIL);
+                String formatliMaas = String.format(Locale.GERMANY, "%,.0f €", futbolcu.getMaas());
+                showMessage(futbolcu.getAd() + " " + futbolcu.getSoyad() + " kadroya eklendi. (Maaş: " + formatliMaas + ")", Formatlayici.YESIL);
             } catch (Exception e) {
                 gosterHataAlert("Ekleme Hatası", e.getMessage());
             }
@@ -274,7 +370,6 @@ public class MainGUI extends Application {
         Dialog<TeknikDirektor> dialog = new Dialog<>();
         dialog.setTitle("Yeni Teknik Direktör Kaydı");
         dialog.setHeaderText("Teknik direktör bilgilerini manuel olarak giriniz.");
-
         ButtonType saveButtonType = new ButtonType("Kaydet", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
@@ -282,17 +377,13 @@ public class MainGUI extends Application {
         grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Manuel Giriş Alanları (ComboBox'lar TextField'a dönüştürüldü)
         TextField adField = new TextField(); adField.setPromptText("Örn: Okan");
         TextField soyadField = new TextField(); soyadField.setPromptText("Örn: Buruk");
         DatePicker dogumTarihiPicker = new DatePicker(LocalDate.of(1973, 10, 19));
         TextField ulkeField = new TextField(); ulkeField.setPromptText("Örn: Türkiye");
         TextField gorevSuresiField = new TextField(); gorevSuresiField.setPromptText("Örn: 2");
-
-        // Lisans ve Taktik artık manuel girişli
         TextField lisansField = new TextField(); lisansField.setPromptText("Örn: UEFA Pro");
         TextField dizilisField = new TextField(); dizilisField.setPromptText("Örn: 4-2-3-1");
-
         TextField puanField = new TextField(); puanField.setPromptText("Örn: 2.15");
         TextField kupaField = new TextField(); kupaField.setPromptText("Örn: 5");
 
@@ -308,31 +399,17 @@ public class MainGUI extends Application {
 
         dialog.getDialogPane().setContent(grid);
 
-        // Veri Dönüştürme ve Hata Kontrolü
         dialog.setResultConverter(btn -> {
             if (btn == saveButtonType) {
                 try {
                     int gorevYili = Integer.parseInt(gorevSuresiField.getText().trim());
                     double ortPuan = Double.parseDouble(puanField.getText().trim());
                     int kupaSayisi = Integer.parseInt(kupaField.getText().trim());
-
-                    // Beklenen 11 parametreyi tam göndererek Argument hatasını çözer
                     return new TeknikDirektor(
-                            adField.getText().trim(),
-                            soyadField.getText().trim(),
-                            dogumTarihiPicker.getValue(),
-                            "TD-" + System.currentTimeMillis() % 1000,
-                            500000.0, // Varsayılan Maaş
-                            LocalDate.now(),
-                            gorevYili,
-                            dizilisField.getText().trim(), // Manuel giriş
-                            ortPuan,
-                            lisansField.getText().trim(), // Manuel giriş
-                            ortPuan,
-                            kupaSayisi,
-                            ulkeField.getText().trim(),
-                            "Süper Lig",
-                            5.0
+                            adField.getText().trim(), soyadField.getText().trim(), dogumTarihiPicker.getValue(),
+                            "TD-" + System.currentTimeMillis() % 1000, 500000.0, LocalDate.now(),
+                            gorevYili, dizilisField.getText().trim(), ortPuan, lisansField.getText().trim(),
+                            ortPuan, kupaSayisi, ulkeField.getText().trim(), "Süper Lig", 5.0
                     );
                 } catch (NumberFormatException e) {
                     gosterHataAlert("Giriş Hatası", "Yıl, Puan ve Kupa alanları sadece sayı olmalıdır!");
@@ -342,16 +419,12 @@ public class MainGUI extends Application {
             return null;
         });
 
-        // Try-Catch ve showMessage kullanımı
         dialog.showAndWait().ifPresent(td -> {
             try {
                 service.teknikDirektorEkle(td);
-                // Başarılı işlem bildirimi
                 showMessage("BAŞARILI: Teknik Direktör " + td.getAd() + " " + td.getSoyad() + " başarıyla eklendi.", "YESIL");
             } catch (Exception e) {
-                // Hata durumunda bildirim
-                showMessage("HATA: Kayıt yapılamadı: " + e.getMessage(), "KIRMIZI");
-                gosterHataAlert("Sistem Hatası", e.getMessage());
+                showMessage("HATA: " + e.getMessage(), "KIRMIZI");
             }
         });
     }
@@ -360,7 +433,6 @@ public class MainGUI extends Application {
         Dialog<YardimciAntrenor> dialog = new Dialog<>();
         dialog.setTitle("Yeni Yardımcı Antrenör Kaydı");
         dialog.setHeaderText("Antrenör bilgilerini ve uzmanlık alanını giriniz.");
-
         ButtonType saveButtonType = new ButtonType("Kaydet", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
@@ -368,15 +440,12 @@ public class MainGUI extends Application {
         grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Giriş Alanları
         TextField adField = new TextField(); adField.setPromptText("Örn: Ayhan");
         TextField soyadField = new TextField(); soyadField.setPromptText("Örn: Akman");
         DatePicker dogumTarihiPicker = new DatePicker(LocalDate.of(1977, 2, 23));
         TextField uyrukField = new TextField(); uyrukField.setPromptText("Örn: Türkiye");
         TextField lisansField = new TextField(); lisansField.setPromptText("Örn: UEFA A");
         TextField sureField = new TextField(); sureField.setPromptText("Tecrübe (Yıl - Örn: 3.5)");
-
-        // Görev/Uzmanlık Seçimi
         ComboBox<String> gorevBox = new ComboBox<>();
         gorevBox.getItems().addAll("Yardımcı Antrenör", "Kaleci Antrenörü", "Atletik Performans Antrenörü", "Maç Analisti", "Duran Top Antrenörü");
         gorevBox.setValue("Yardımcı Antrenör");
@@ -394,24 +463,13 @@ public class MainGUI extends Application {
         dialog.setResultConverter(btn -> {
             if (btn == saveButtonType) {
                 try {
-                    // Arka planda otomatik atananlar (TC, Maaş, Başlama)
                     String tcNo = "ANT-" + System.currentTimeMillis() % 10000;
                     double varsayilanMaas = 85000.0;
-                    LocalDate bugun = LocalDate.now();
                     double tecrube = Double.parseDouble(sureField.getText().trim());
-
-                    // SENİN SINIFINDAKİ SIRALAMA: (ad, soyad, dt, tc, maas, iseBaslama, uzmanlik, sahaSure, uyruk, lisans)
                     return new YardimciAntrenor(
-                            adField.getText().trim(),        // 1. ad
-                            soyadField.getText().trim(),     // 2. soyad
-                            dogumTarihiPicker.getValue(),    // 3. dogumTarihi
-                            tcNo,                            // 4. tcKimlikNo
-                            varsayilanMaas,                  // 5. maas
-                            bugun,                           // 6. iseBaslamaTarihi
-                            gorevBox.getValue(),             // 7. uzmanlikAlani (Görev)
-                            tecrube,                         // 8. sahaIciSure (double)
-                            uyrukField.getText().trim(),     // 9. uyruk
-                            lisansField.getText().trim()     // 10. antrenorlukLisansi
+                            adField.getText().trim(), soyadField.getText().trim(), dogumTarihiPicker.getValue(),
+                            tcNo, varsayilanMaas, LocalDate.now(), gorevBox.getValue(), tecrube,
+                            uyrukField.getText().trim(), lisansField.getText().trim()
                     );
                 } catch (NumberFormatException e) {
                     gosterHataAlert("Giriş Hatası", "Tecrübe süresi sayı olmalıdır!");
@@ -421,25 +479,16 @@ public class MainGUI extends Application {
             return null;
         });
 
-        // Unhandled Exception ve showMessage çözümü
         dialog.showAndWait().ifPresent(ant -> {
-            try {
-                service.yardimciAntrenorEkle(ant);
-                showMessage("BAŞARILI: " + ant.getAd() + " antrenör kadrosuna eklendi.", "YESIL");
-            } catch (Exception e) {
-                // Görseldeki kırmızı hatayı yakalayan blok
-                showMessage("HATA: Kayıt yapılamadı: " + e.getMessage(), "KIRMIZI");
-                gosterHataAlert("Sistem Hatası", e.getMessage());
-            }
+            try { service.yardimciAntrenorEkle(ant); showMessage("BAŞARILI: " + ant.getAd() + " eklendi.", "YESIL");
+            } catch (Exception e) { showMessage("HATA: " + e.getMessage(), "KIRMIZI"); }
         });
     }
-
 
     private void handleAddNewFizyoterapist() {
         Dialog<Fizyoterapist> dialog = new Dialog<>();
         dialog.setTitle("Yeni Fizyoterapist Kaydı");
         dialog.setHeaderText("Fizyoterapist akademik ve kariyer bilgilerini giriniz.");
-
         ButtonType saveButtonType = new ButtonType("Kaydet", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
@@ -447,7 +496,6 @@ public class MainGUI extends Application {
         grid.setHgap(10); grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        // Manuel Giriş Alanları (Kullanıcının dolduracağı kısımlar)
         TextField adField = new TextField(); adField.setPromptText("Örn: Yener");
         TextField soyadField = new TextField(); soyadField.setPromptText("Örn: İnce");
         DatePicker dogumTarihiPicker = new DatePicker(LocalDate.of(1980, 1, 1));
@@ -458,7 +506,6 @@ public class MainGUI extends Application {
         CheckBox masajYetkisiBox = new CheckBox("Spor Masaj Yetkisi Var mı?");
         masajYetkisiBox.setSelected(true);
 
-        // Alanları Yerleştir (TC, Maaş ve İşe Başlama kaldırıldı)
         grid.add(new Label("Ad:"), 0, 0);               grid.add(adField, 1, 0);
         grid.add(new Label("Soyad:"), 0, 1);            grid.add(soyadField, 1, 1);
         grid.add(new Label("Doğum Tarihi:"), 0, 2);      grid.add(dogumTarihiPicker, 1, 2);
@@ -470,29 +517,15 @@ public class MainGUI extends Application {
 
         dialog.getDialogPane().setContent(grid);
 
-        // Veri Dönüştürme ve Arka Planda Otomatik Atama
         dialog.setResultConverter(btn -> {
             if (btn == saveButtonType) {
                 try {
-                    // Görselden kaldırılan alanlar için otomatik değerler
                     String otomatikTC = "FT-" + System.currentTimeMillis() % 10000;
-                    double varsayilanMaas = 100000.0;
-                    LocalDate bugun = LocalDate.now();
                     double gorevSuresi = Double.parseDouble(gorevSuresiField.getText().trim());
-
-                    // 11 Parametreli Constructor'a tam uyumlu gönderim
                     return new Fizyoterapist(
-                            adField.getText().trim(),            // 1
-                            soyadField.getText().trim(),         // 2
-                            dogumTarihiPicker.getValue(),        // 3
-                            otomatikTC,                          // 4 (Otomatik)
-                            varsayilanMaas,                      // 5 (Otomatik)
-                            bugun,                               // 6 (Otomatik)
-                            uzmanlikField.getText().trim(),      // 7
-                            masajYetkisiBox.isSelected(),        // 8
-                            uyrukField.getText().trim(),         // 9
-                            uniField.getText().trim(),           // 10
-                            gorevSuresi                          // 11
+                            adField.getText().trim(), soyadField.getText().trim(), dogumTarihiPicker.getValue(),
+                            otomatikTC, 100000.0, LocalDate.now(), uzmanlikField.getText().trim(),
+                            masajYetkisiBox.isSelected(), uyrukField.getText().trim(), uniField.getText().trim(), gorevSuresi
                     );
                 } catch (NumberFormatException e) {
                     gosterHataAlert("Giriş Hatası", "Görev süresi sayı olmalıdır!");
@@ -502,24 +535,16 @@ public class MainGUI extends Application {
             return null;
         });
 
-        // Unhandled Exception hatasını çözen blok
         dialog.showAndWait().ifPresent(ft -> {
-            try {
-                service.fizyoterapistEkle(ft);
-                showMessage("BAŞARILI: Fizyoterapist " + ft.getAd() + " eklendi.", "YESIL");
-            } catch (Exception e) {
-                showMessage("HATA: " + e.getMessage(), "KIRMIZI");
-                gosterHataAlert("Ekleme Hatası", e.getMessage());
-            }
+            try { service.fizyoterapistEkle(ft); showMessage("BAŞARILI: " + ft.getAd() + " eklendi.", "YESIL");
+            } catch (Exception e) { showMessage("HATA: " + e.getMessage(), "KIRMIZI"); }
         });
     }
 
     private void handleSkorKatkisiSiralamasi() {
-        // 1. Yeni bir pencere (Stage) oluştur
         Stage reportStage = new Stage();
         reportStage.setTitle("Skor Katkısı Sıralaması (Top-Down)");
 
-        // 2. Tablo yapısını kur
         TableView<Futbolcu> table = new TableView<>();
 
         TableColumn<Futbolcu, String> nameCol = new TableColumn<>("Ad Soyad");
@@ -536,23 +561,19 @@ public class MainGUI extends Application {
         toplamCol.setCellValueFactory(data -> new javafx.beans.property.SimpleObjectProperty<>(
                 data.getValue().getGolSayisi() + data.getValue().getAsistSayisi()));
 
-        // Tablo sütunlarını ekle
         table.getColumns().addAll(Arrays.asList(nameCol, golCol, asistCol, toplamCol));
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        // 3. Verileri al ve sırala (Polimorfizm ve List kullanımı)
         List<Futbolcu> liste = new ArrayList<>(service.getFutbolcuKadrosu());
 
-        // En yüksek skoru olan en üstte (Descending Order)
         liste.sort((f1, f2) -> {
             int skor1 = f1.getGolSayisi() + f1.getAsistSayisi();
             int skor2 = f2.getGolSayisi() + f2.getAsistSayisi();
-            return Integer.compare(skor2, skor1); // f2 vs f1 yaparak büyükten küçüğe sıralar
+            return Integer.compare(skor2, skor1);
         });
 
         table.getItems().addAll(liste);
 
-        // 4. Arayüz düzeni
         VBox vbox = new VBox(10);
         vbox.setPadding(new Insets(15));
         Label header = new Label("Futbolcu Performans Sıralaması");
@@ -564,7 +585,6 @@ public class MainGUI extends Application {
         reportStage.setScene(scene);
         reportStage.show();
 
-        // Ana ekrandaki messageArea'ya da kısa bir özet geç
         if (!liste.isEmpty()) {
             Futbolcu lider = liste.get(0);
             showMessage("SIRALAMA: Takımın skor lideri: " + lider.getAd() + " " + lider.getSoyad() +
@@ -610,17 +630,12 @@ public class MainGUI extends Application {
     }
 
     private String cleanAnsi(String text) { return text.replaceAll("\\[\\d+m", ""); }
-
-    private void showMessage(String message, String color) {
-        messageArea.appendText(cleanAnsi(message) + "\n");
-    }
-
+    private void showMessage(String message, String color) { messageArea.appendText(cleanAnsi(message) + "\n"); }
     private void gosterSonucAlert(boolean basarili, String baslik, String basariMesaj, String hataMesaj) {
         Alert alert = new Alert(basarili ? AlertType.INFORMATION : AlertType.ERROR);
         alert.setContentText(basarili ? basariMesaj : hataMesaj);
         alert.showAndWait();
     }
-
     private void gosterHataAlert(String baslik, String mesaj) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setContentText(mesaj);

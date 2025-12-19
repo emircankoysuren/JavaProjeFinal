@@ -22,6 +22,10 @@ public class TakimService {
     private Map<Integer, Futbolcu> formaNoHaritasi;
     private Map<LocalDate, MacVerisi> macGecmisi;
 
+    // Haftalık program verisi
+    private final String[] gunler = {"Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"};
+    private String[] haftalikAktiviteler = {"Kondisyon", "Taktik", "Maç", "Analiz", "Şut", "Hazırlık", "Dinlenme"};
+
     private static final String FUTBOLCU_DOSYA = "futbolcular.txt";
     private static final String TEKNIK_DIREKTOR_DOSYA = "teknikdirektorler.txt";
     private static final String YARDIMCI_ANTRENOR_DOSYA = "yardimciantrenorler.txt";
@@ -86,9 +90,6 @@ public class TakimService {
         tumVerileriKaydet();
     }
 
-    /**
-     * Gereksinim 4.55: Metot Overloading (Aşırı Yükleme)
-     */
     public boolean performansGuncelle(int formaNo, int yeniGol) {
         return performansVerisiGir(formaNo, yeniGol, 0);
     }
@@ -97,8 +98,7 @@ public class TakimService {
         Futbolcu f = formaNoHaritasi.get(formaNo);
         if (f != null) {
             try {
-                f.setGolSayisi(f.getGolSayisi() + gol);
-                f.setAsistSayisi(f.getAsistSayisi() + asist);
+                f.performansGuncelle((double) gol, (double) asist);
                 tumVerileriKaydet();
                 return true;
             } catch (IllegalArgumentException e) {
@@ -108,25 +108,25 @@ public class TakimService {
         return false;
     }
 
-    /**
-     * Gereksinim 9: Çok Boyutlu Dizi ve Klasik For Döngüsü
-     */
+    // Haftalık Programı Güncelleme Metodu
+    public void haftalikProgramGuncelle(String[] yeniAktiviteler) {
+        if (yeniAktiviteler.length == 7) {
+            this.haftalikAktiviteler = yeniAktiviteler;
+        }
+    }
+
+    public String[] getHaftalikAktiviteler() { return haftalikAktiviteler; }
+    public String[] getGunler() { return gunler; }
+
     public String haftalikProgramiGoster() {
-        String[][] program = {
-                {"Pazartesi", "Kondisyon"}, {"Salı", "Taktik"}, {"Çarşamba", "Maç"},
-                {"Perşembe", "Analiz"}, {"Cuma", "Şut"}, {"Cumartesi", "Hazırlık"}, {"Pazar", "MAÇ"}
-        };
         StringBuilder sb = new StringBuilder();
-        sb.append(Formatlayici.renklendir("--- HAFTALIK PROGRAM ---\n", Formatlayici.MAVI));
-        for (int i = 0; i < program.length; i++) {
-            sb.append(program[i][0]).append(": ").append(program[i][1]).append("\n");
+        sb.append(Formatlayici.renklendir("--- GÜNCEL HAFTALIK PROGRAM ---\n", Formatlayici.MAVI));
+        for (int i = 0; i < gunler.length; i++) {
+            sb.append(String.format("%-10s : %s\n", gunler[i], haftalikAktiviteler[i]));
         }
         return sb.toString();
     }
 
-    /**
-     * Gereksinim 9: While ve Do-While Döngüleri
-     */
     public void sistemBütünlükKontrolü() {
         int c = 0;
         while (c < 1) { System.out.println("Sistem taranıyor..."); c++; }
@@ -134,12 +134,7 @@ public class TakimService {
         do { System.out.println("Bütünlük doğrulandı."); d++; } while (d < 1);
     }
 
-    public double antrenmanPuanOrtalamasiHesapla() {
-        double[] puanlar = {8.5, 9.2, 7.8, 8.0, 9.5};
-        double toplam = 0;
-        for (double p : puanlar) { toplam += p; }
-        return toplam / puanlar.length;
-    }
+    // GÜNCELLEME: antrenmanPuanOrtalamasiHesapla() METODU SİLİNDİ.
 
     public boolean futbolcuSil(int fNo) {
         boolean r = futbolcuKadrosu.removeIf(f -> f.getFormaNo() == fNo);
@@ -170,10 +165,16 @@ public class TakimService {
     }
 
     public String skorKatkisiRaporuGetir() {
-        futbolcuKadrosu.sort(Comparator.comparingInt(Futbolcu::skorKatkisiHesapla).reversed());
+        futbolcuKadrosu.sort(Comparator.comparingDouble(Futbolcu::performansPuaniniHesapla).reversed());
         StringBuilder sb = new StringBuilder();
-        sb.append(Formatlayici.renklendir("--- SKOR KATKISI ---\n", Formatlayici.YESIL));
-        futbolcuKadrosu.forEach(f -> sb.append(f.getSkorKatkisiDetay()).append("\n"));
+        sb.append(Formatlayici.renklendir("--- SKOR KATKISI VE PERFORMANS RAPORU ---\n", Formatlayici.YESIL));
+        futbolcuKadrosu.forEach(f -> {
+            sb.append(String.format("Forma No: %-3d | %-20s | %s (%s)\n",
+                    f.getFormaNo(),
+                    f.getAd() + " " + f.getSoyad(),
+                    f.getPerformansDetayi(),
+                    f.performansDurumuAnalizi()));
+        });
         return sb.toString();
     }
 
@@ -192,13 +193,14 @@ public class TakimService {
             teknikDirektorler = DosyaIslemleri.dosyadanOku(TEKNIK_DIREKTOR_DOSYA, TeknikDirektor.class);
             yardimciAntrenorler = DosyaIslemleri.dosyadanOku(YARDIMCI_ANTRENOR_DOSYA, YardimciAntrenor.class);
             fizyoterapistler = DosyaIslemleri.dosyadanOku(FIZYOTERAPIST_DOSYA, Fizyoterapist.class);
-        } catch (Exception e) { System.err.println("Yükleme hatası."); }
+        } catch (Exception e) { System.err.println("Yükleme hatası veya dosya boş."); }
     }
 
     public List<Futbolcu> getFutbolcuKadrosu() { return futbolcuKadrosu; }
     public List<TeknikDirektor> getTeknikDirektorler() { return teknikDirektorler; }
     public List<YardimciAntrenor> getYardimciAntrenorler() { return yardimciAntrenorler; }
     public List<Fizyoterapist> getFizyoterapistler() { return fizyoterapistler; }
+
     public String yillikFinansalAnalizRaporu() {
         List<Calisan> tumEkip = new ArrayList<>();
         tumEkip.addAll(getTeknikDirektorler());
@@ -209,7 +211,6 @@ public class TakimService {
         sb.append(Formatlayici.renklendir("--- KULÜP FİNANSAL VERİMLİLİK ANALİZİ ---\n", Formatlayici.MAVI));
 
         for (Calisan c : tumEkip) {
-            // Interface metotlarını burada bizzat "kullanıyoruz"
             double tazminat = c.kidemTazminatiHesapla();
             String durum = c.maliyetDurumuAnaliziGetir();
             double brut = c.yillikBrutMaasGetir();
