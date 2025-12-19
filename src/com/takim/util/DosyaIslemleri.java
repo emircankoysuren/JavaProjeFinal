@@ -16,10 +16,17 @@ public class DosyaIslemleri {
      * Bir listeyi belirtilen dosyaya yazar (Serileştirir).
      */
     public static <T extends Serializable> void dosyayaYaz(List<T> liste, String dosyaAdi) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(dosyaAdi))) {
+        ObjectOutputStream oos = null;
+        try {
+            oos = new ObjectOutputStream(new FileOutputStream(dosyaAdi));
             oos.writeObject(liste);
+            System.out.println(Formatlayici.renklendir(dosyaAdi + " dosyası başarıyla kaydedildi.", Formatlayici.MAVI));
+        } finally {
+            if (oos != null) {
+                oos.close(); // Dosya her koşulda kapatılır
+                System.out.println("Dosya kapatma işlemi finally bloğunda yapıldı.");
+            }
         }
-        System.out.println(Formatlayici.renklendir(dosyaAdi + " dosyası başarıyla kaydedildi.", Formatlayici.MAVI));
     }
 
     /**

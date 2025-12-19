@@ -72,15 +72,28 @@ public class TeknikDirektor extends Calisan implements Serializable, Performans 
     public double getPuanOrt() { return puanOrt; }
     public int getKupaSayisi() { return kupaSayisi; }
 
-    @Override public double maasHesapla() { return getMaas() + (hizmetYiliHesapla() * 1000); }
-    @Override public double primHesapla(int performansPuani) { return performansPuani > 80 ? getMaas() * 0.15 : 0; }
-    @Override public double yillikMaasArtisiOraniGetir() { return hizmetYiliHesapla() > 5 ? 0.10 : 0.05; }
-    @Override public double vergiKesintisiHesapla(Month ay) { return maasHesapla() * 0.20; }
-    @Override public double yillikBrutMaasGetir() { return maasHesapla() * 12; }
-    @Override public double kidemTazminatiHesapla() { return super.kidemTazminatiHesapla() + (getKupaSayisi() * 10000); }
+    @Override
+    public double maasHesapla() {
+        // Senin manuel girdiğin temel maaşı döndürür
+        return getMaas();
+    }
 
-    @Override public String butceDurumuGetir() { return getMaas() > 400000 ? "Yıldız Kategori" : "Standart"; }
-    @Override public String maliyetDurumuAnaliziGetir() { return String.format("Maliyet: %.2f", getMaas()); }
+    @Override
+    public double primHesapla(int gol, int asist) {
+        // Senin isteğin üzerine: Teknik direktör için prim hesaplamıyoruz
+        // Bu yüzden her zaman 0 döner
+        return 0.0;
+    }
+
+    @Override
+    public double toplamMaliyetHesapla(int gol, int asist) {
+        // Kulüp Gideri = Sadece temel maaş (prim 0 olduğu için)
+        // Aritmetik işlem gereksinimi için: maas + prim
+        return maasHesapla() + primHesapla(gol, asist);
+    }
+
+
+
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     @Override

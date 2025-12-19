@@ -1,19 +1,16 @@
 package com.takim.model;
 
-import java.time.Month;
-
 /**
  * 4.3: Interface gereksinimi.
- * Güncellendi: Finansal analiz ve bütçe metotlarını içerir.
+ * Finansal Analiz Raporu için gerekli temel hesaplamaları sağlar.
  */
 public interface MaasHesaplanabilir {
-    double yillikMaasArtisiOraniGetir();
-    double vergiKesintisiHesapla(Month ay);
-    double yillikBrutMaasGetir();
+    // 1. Temel Maaş Hesaplama (Kullanıcı girişi + varsa kıdem/bonus)
+    double maasHesapla();
 
-    // YENİ EKLENEN METOTLAR (Kullanım için)
-    double kidemTazminatiHesapla();        // İşten ayrılma maliyeti
-    double verimlilikPuaniHesapla(int perf); // Maaş/Performans oranı
-    String maliyetDurumuAnaliziGetir();
-    String butceDurumuGetir();             // Kulüp bütçesine etkisi
+    // 2. Prim Hesaplama (8. madde için kritik: Gol/Asist veya Başarı Primi)
+    double primHesapla(int gol, int asist);
+
+    // 3. Toplam Maliyet Analizi (Maaş + Prim + Sigorta/Vergi yükü)
+    double toplamMaliyetHesapla(int gol, int asist);
 }

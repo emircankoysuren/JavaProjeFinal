@@ -10,7 +10,7 @@ public class Formatlayici {
 
     // Bonus: Renkli Konsol Ciktilari - Statik alanlar (10. Bolum)
     public static final String YESIL = "\u001B[32m";
-    public static final String KIRMİZİ = "\u001B[31m";
+    public static final String KIRMIZI = "\u001B[31m";
     public static final String MAVI = "\u001B[34m";
     public static final String RESET = "\u001B[0m";
 

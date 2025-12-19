@@ -25,26 +25,26 @@ public class YardimciAntrenor extends Calisan {
     public String getUyruk() { return uyruk; }
     public String getAntrenorlukLisansi() { return antrenorlukLisansi; }
 
-    @Override public double maasHesapla() { return getMaas() + (hizmetYiliHesapla() * 500); }
-    @Override public double primHesapla(int performansPuani) { return performansPuani > 70 ? getMaas() * 0.05 : 0; }
-    @Override public double yillikMaasArtisiOraniGetir() { return hizmetYiliHesapla() > 3 ? 0.07 : 0.05; }
-    @Override public double vergiKesintisiHesapla(Month ay) { return ay.getValue() >= 10 ? maasHesapla() * 0.25 : maasHesapla() * 0.18; }
-    @Override public double yillikBrutMaasGetir() { return (maasHesapla() * 12) + (hizmetYiliHesapla() * 500); }
     @Override
-    public double verimlilikPuaniHesapla(int performans) {
-        // Yardımcı antrenörlerde saha içi tecrübe çarpanı kullanılır
-        return super.verimlilikPuaniHesapla(performans) * (1 + (getSahaIciSure() / 20));
+    public double maasHesapla() {
+        // Senin manuel girdiğin temel maaşı döndürür
+        return getMaas();
     }
 
     @Override
-    public String butceDurumuGetir() {
-        return getSahaIciSure() > 10 ? "Kıdemli Antrenör Bütçesi" : "Gelişim Antrenörü";
+    public double primHesapla(int gol, int asist) {
+        // Yardımcı antrenörler için prim hesaplamıyoruz (0 döner)
+        return 0.0;
     }
 
     @Override
-    public String maliyetDurumuAnaliziGetir() {
-        return "Lisans Tipi: " + getAntrenorlukLisansi() + " Analizi";
+    public double toplamMaliyetHesapla(int gol, int asist) {
+        // Kulüp Gideri = Temel Maaş + Prim (0)
+        // Aritmetik işlem (+ operatörü) kullanımı
+        return maasHesapla() + primHesapla(gol, asist);
     }
+
+
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     @Override

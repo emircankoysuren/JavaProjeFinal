@@ -5,7 +5,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.Locale;
 
-public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Performans {
+public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Performans,MaasHesaplanabilir {
 
     private static final long serialVersionUID = 1L;
     private int formaNo;
@@ -15,6 +15,8 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
     private String ulke;
     private double maas;
     private char mevkisizKarakter = 'A';
+    private int toplamGol = 0;
+    private int toplamAsist = 0;
 
     public Futbolcu(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                     int formaNo, String mevki, int golSayisi, int asistSayisi, String ulke, double maas) throws GecersizFormaNoException {
@@ -84,6 +86,9 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
         if (asistSayisi < 0) throw new IllegalArgumentException("Negatif olamaz");
         this.asistSayisi = asistSayisi;
     }
+
+    public int getToplamAsist() {return toplamAsist;}
+    public int getToplamGol() {return toplamGol;}
     public String getMevki() { return mevki; }
     public void setMevki(String mevki) { this.mevki = mevki; }
     public String getUlke() { return ulke; }
@@ -107,19 +112,15 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
                         "| %-20s : %s\n" +
                         "----------------------------------------------------------\n" +
                         "| %-20s : %s %s\n" +
-                        "| %-20s : %d\n" +
+                        "| %-20s : %s\n" +
+                        "| %-20s : %.0fM €\n" + // Maaş formatını %.0fM € yaptık
                         "| %-20s : %s\n" +
                         "| %-20s : %s\n" +
-                        "| %-20s : %s\n" +
-                        "| %-20s : %s\n" + // Performans Detayı (Interface'den)
-                        "| %-20s : %s\n" + // Analiz (Interface'den)
                         "==========================================================",
                 "ÜNVAN", "FUTBOLCU",
                 "Ad Soyad", getAd(), getSoyad(),
-                "Forma No", formaNo,
-                "Mevki", mevki,
-                "Uyruk", ulke,
-                "Maaş", String.format(Locale.GERMANY, "%,.0f €", maas),
+                "Mevki", getMevki(),
+                "Maaş", getMaas(), // Artık 15 olarak tutulduğu için doğrudan basılır
                 "İstatistik", getPerformansDetayi(),
                 "Durum", performansDurumuAnalizi()
         );
@@ -129,4 +130,36 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
     @Override public String detayliIstatistikGetir(LocalDate baslangic, LocalDate bitis) { return "Rapor"; }
     @Override public boolean raporDurumuKontrolEt() { return true; }
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
+
+    @Override
+    public double maasHesapla() {
+        // Kullanıcının girdiği milyon euro bazlı ana maaşı döndürür
+        // Örn: 15.0
+        return this.maas;
+    }
+    public void performansEkle(int yeniGol, int yeniAsist) {
+        this.toplamGol += yeniGol; // Mevcut golün üzerine ekle
+        this.toplamAsist += yeniAsist; // Mevcut asistin üzerine ekle
+    }
+    @Override
+    public double primHesapla(int g, int a) {
+        // Gelen g ve a parametrelerini kullanma! Kendi kümülatif verini kullan:
+        return (this.toplamGol * 0.01) + (this.toplamAsist * 0.005);
+    }
+
+    @Override
+    public double toplamMaliyetHesapla(int gol, int asist) {
+        // Kulüp Gideri = Ana Maaş (Milyon €) + Primler (Milyon €)
+        // Aritmetik Operatör (Gereksinim 2.2)
+        return maasHesapla() + primHesapla(gol, asist);
+    }
+
+
+    public char getMevkisizKarakter() {
+        return mevkisizKarakter;
+    }
+
+    public void setMevkisizKarakter(char mevkisizKarakter) {
+        this.mevkisizKarakter = mevkisizKarakter;
+    }
 }

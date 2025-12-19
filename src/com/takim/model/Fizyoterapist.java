@@ -35,27 +35,30 @@ public class Fizyoterapist extends Calisan implements Serializable {
     public String getMezuniyetUniversitesi() { return mezuniyetUniversitesi; }
     public double getGorevSuresiYil() { return gorevSuresiYil; }
 
-    @Override public double maasHesapla() { return getMaas() + (this.sporMasajYetkisi ? 2000 : 500); }
-    @Override public double primHesapla(int performansPuani) { return (double)tecrubeYili * (performansPuani / 100.0); }
-    @Override public double yillikMaasArtisiOraniGetir() { return this.uzmanlikAlani.toLowerCase().contains("spor") ? 0.12 : 0.08; }
-    @Override public double vergiKesintisiHesapla(Month ay) { return ay == Month.JANUARY ? maasHesapla() * 0.15 : maasHesapla() * 0.20; }
-    @Override public double yillikBrutMaasGetir() { return (maasHesapla() * 12) + ((double)getTecrubeYili() * 1000); }
     @Override
-    public double kidemTazminatiHesapla() {
-        // Fizyoterapistlerde uzmanlık alanına göre ek tazminat çarpanı
-        double ek = getUzmanlikAlani().toLowerCase().contains("spor") ? 5000 : 2000;
-        return super.kidemTazminatiHesapla() + ek;
+    public double maasHesapla() {
+        // Senin manuel girdiğin maaşı döndürür
+        return getMaas();
     }
 
     @Override
-    public String butceDurumuGetir() {
-        return isSporMasajYetkisi() ? "Kritik Sağlık Personeli (Bütçe Dahili)" : "Destek Personel";
+    public double primHesapla(int gol, int asist) {
+        // Fizyoterapistlerin gol/asist primi olmaz
+        // Ancak profesyonellik gereği: Eğer masaj yetkisi varsa sabit 2000€ ek prim alabilir
+        return this.sporMasajYetkisi ? 2000.0 : 0.0;
     }
 
     @Override
-    public String maliyetDurumuAnaliziGetir() {
-        return "Uzmanlık: " + getUzmanlikAlani() + " - Sağlık Bütçesi Analizi";
+    public double toplamMaliyetHesapla(int gol, int asist) {
+        // Kulüp Gideri = Manuel Maaş + Masaj Primi (varsa)
+        // Burada + operatörü ile aritmetik gereksinim sağlanır
+        return maasHesapla() + primHesapla(gol, asist);
     }
+
+
+
+
+
     @Override public void bilgiYazdir() { System.out.println(this.toString()); }
 
     @Override

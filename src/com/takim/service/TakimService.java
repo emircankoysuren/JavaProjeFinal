@@ -9,6 +9,10 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.IOException;
+
 public class TakimService {
 
     private static int yardimciAntrenorCounter = 0;
@@ -30,7 +34,7 @@ public class TakimService {
     private static final String TEKNIK_DIREKTOR_DOSYA = "teknikdirektorler.txt";
     private static final String YARDIMCI_ANTRENOR_DOSYA = "yardimciantrenorler.txt";
     private static final String FIZYOTERAPIST_DOSYA = "fizyoterapistler.txt";
-
+    private static final String FIKSTUR_DOSYA = "fikstur.dat";
     public TakimService() {
         futbolcuKadrosu = new ArrayList<>();
         teknikDirektorler = new ArrayList<>();
@@ -184,6 +188,7 @@ public class TakimService {
             DosyaIslemleri.dosyayaYaz(teknikDirektorler, TEKNIK_DIREKTOR_DOSYA);
             DosyaIslemleri.dosyayaYaz(yardimciAntrenorler, YARDIMCI_ANTRENOR_DOSYA);
             DosyaIslemleri.dosyayaYaz(fizyoterapistler, FIZYOTERAPIST_DOSYA);
+            DosyaIslemleri.dosyayaYaz(new ArrayList<>(macGecmisi.values()), FIKSTUR_DOSYA);
         } catch (IOException e) { System.err.println("Kayıt hatası: " + e.getMessage()); }
     }
 
@@ -193,7 +198,14 @@ public class TakimService {
             teknikDirektorler = DosyaIslemleri.dosyadanOku(TEKNIK_DIREKTOR_DOSYA, TeknikDirektor.class);
             yardimciAntrenorler = DosyaIslemleri.dosyadanOku(YARDIMCI_ANTRENOR_DOSYA, YardimciAntrenor.class);
             fizyoterapistler = DosyaIslemleri.dosyadanOku(FIZYOTERAPIST_DOSYA, Fizyoterapist.class);
-        } catch (Exception e) { System.err.println("Yükleme hatası veya dosya boş."); }
+            List<MacVerisi> yuklenenMaclar = DosyaIslemleri.dosyadanOku(FIKSTUR_DOSYA, MacVerisi.class);
+            if (yuklenenMaclar != null) {
+                for (MacVerisi m : yuklenenMaclar) {
+                    macGecmisi.put(m.getMacTarihi(), m);
+                }
+            }
+        }
+         catch (Exception e) { System.err.println("Yükleme hatası veya dosya boş."); }
     }
 
     public List<Futbolcu> getFutbolcuKadrosu() { return futbolcuKadrosu; }
@@ -201,24 +213,118 @@ public class TakimService {
     public List<YardimciAntrenor> getYardimciAntrenorler() { return yardimciAntrenorler; }
     public List<Fizyoterapist> getFizyoterapistler() { return fizyoterapistler; }
 
-    public String yillikFinansalAnalizRaporu() {
-        List<Calisan> tumEkip = new ArrayList<>();
-        tumEkip.addAll(getTeknikDirektorler());
-        tumEkip.addAll(getYardimciAntrenorler());
-        tumEkip.addAll(getFizyoterapistler());
 
+
+    public String detayliFinansalAnalizRaporu() {
         StringBuilder sb = new StringBuilder();
-        sb.append(Formatlayici.renklendir("--- KULÜP FİNANSAL VERİMLİLİK ANALİZİ ---\n", Formatlayici.MAVI));
+        sb.append("========= KULÜP FİNANSAL ANALİZ RAPORU =========\n\n");
 
-        for (Calisan c : tumEkip) {
-            double tazminat = c.kidemTazminatiHesapla();
-            String durum = c.maliyetDurumuAnaliziGetir();
-            double brut = c.yillikBrutMaasGetir();
-
-            sb.append(String.format("%s %s (%s)\n", c.getAd(), c.getSoyad(), durum));
-            sb.append(String.format("> Yıllık Brüt: %.2f TL | Olası Tazminat: %.2f TL\n", brut, tazminat));
-            sb.append("----------------------------------------------------------\n");
+        // 1. Futbolcu Maaş ve Prim Analizi (Kümülatif Veriden Hesaplar)
+        double futbolcuMaasToplam = 0;
+        double futbolcuPrimToplam = 0;
+        for (Futbolcu f : getFutbolcuKadrosu()) {
+            futbolcuMaasToplam += f.maasHesapla(); // Milyon €
+            // f.primHesapla() artık içerideki toplamGol ve toplamAsist'i kullanıyor
+            futbolcuPrimToplam += f.primHesapla(0, 0);
         }
-        return sb.toString();
+
+        // 2. Teknik Kadro ve Sağlık Ekibi Toplamları
+        double tdMaasToplam = 0;
+        for (TeknikDirektor td : getTeknikDirektorler()) tdMaasToplam += td.maasHesapla();
+
+        double antrenorMaasToplam = 0;
+        for (YardimciAntrenor ya : getYardimciAntrenorler()) antrenorMaasToplam += ya.maasHesapla();
+
+        double fizyoMaasToplam = 0;
+        for (Fizyoterapist fi : getFizyoterapistler()) fizyoMaasToplam += fi.maasHesapla();
+
+        // Giderleri Raporla (Tablo Formatında)
+        sb.append(String.format("%-30s : %.2fM €\n", "► Futbolcu Maaş Gideri", futbolcuMaasToplam));
+        sb.append(String.format("%-30s : %.3fM €\n", "► Dağıtılan Toplam Prim", futbolcuPrimToplam));
+        sb.append(String.format("%-30s : %,.0f €\n", "► Teknik Direktör Gideri", tdMaasToplam));
+        sb.append(String.format("%-30s : %,.0f €\n", "► Antrenör Kadrosu Gideri", antrenorMaasToplam));
+        sb.append(String.format("%-30s : %,.0f €\n\n", "► Fizyoterapist Gideri", fizyoMaasToplam));
+
+        sb.append("------------------------------------------------\n");
+
+        // Genel Toplam Hesaplama
+        double genelToplamGider = (futbolcuMaasToplam * 1000000) + (futbolcuPrimToplam * 1000000)
+                + tdMaasToplam + antrenorMaasToplam + fizyoMaasToplam;
+
+        sb.append(String.format("TOPLAM KULÜP GİDERİ (Net): %,.0f €\n", genelToplamGider));
+        sb.append("================================================");
+
+        // Raporu hem döndür hem de otomatik olarak dosyaya kaydet
+        String finalRapor = sb.toString();
+        finansalRaporuDosyayaKaydet(finalRapor);
+
+        return finalRapor;
     }
+
+    public void finansalRaporuDosyayaKaydet(String raporMetni) {
+        // Proje klasöründe "finansal_analiz_raporu.txt" adıyla bir dosya oluşturur
+        try (PrintWriter out = new PrintWriter(new FileWriter("finansal_analiz_raporu.txt"))) {
+            out.println(raporMetni);
+            System.out.println("Rapor başarıyla dosyaya kaydedildi.");
+        } catch (IOException e) {
+            System.err.println("Rapor kaydedilirken hata oluştu: " + e.getMessage());
+        }
+    }
+
+
+    public void macEkle(LocalDate tarih, String rakip, String skor, String macTuru) {
+        // MacVerisi constructor'ına macturu parametresini ekliyoruz
+        // null geçilen alan macSaati'dir, istersen onu da ekleyebilirsin
+        MacVerisi yeniMac = new MacVerisi(tarih, null, rakip, skor, macTuru);
+
+        macGecmisi.put(tarih, yeniMac);
+
+        // Verilerin kaybolmaması için ekleme sonrası kaydı tetikle
+        tumVerileriKaydet();
+    }
+
+    public Map<LocalDate, MacVerisi> getMacGecmisi() {
+        return macGecmisi;
+    }
+    // Dosya adını tanımla
+
+
+    // Verileri Kaydet metoduna ekle
+    public void verileriKaydet() {
+        try {
+            // Mevcut futbolcu/personel kaydetme kodlarının yanına ekle:
+            DosyaIslemleri.dosyayaYaz(new ArrayList<>(macGecmisi.values()), FIKSTUR_DOSYA);
+        } catch (IOException e) {
+            System.err.println("Fikstür kaydedilemedi: " + e.getMessage());
+        }
+    }
+
+    // Verileri Yükle metoduna ekle
+    public void verileriYukle() {
+        try {
+            List<MacVerisi> yuklenenMaclar = DosyaIslemleri.dosyadanOku(FIKSTUR_DOSYA, MacVerisi.class);
+            if (yuklenenMaclar != null) {
+                for (MacVerisi m : yuklenenMaclar) {
+                    macGecmisi.put(m.getMacTarihi(), m);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Geçmiş fikstür kaydı bulunamadı, yeni liste oluşturuluyor.");
+        }
+    }
+    public Futbolcu futbolcuBul(String formaNoStr) {
+        try {
+            int arananNo = Integer.parseInt(formaNoStr); // String'i sayıya çeviriyoruz
+            for (Futbolcu f : futbolcuKadrosu) {
+                // f.getFormaNo() artık image_71d007'deki int değişkenine ulaşacak
+                if (f.getFormaNo() == arananNo) {
+                    return f;
+                }
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Geçersiz forma numarası formatı!");
+        }
+        return null;
+    }
+
 }
