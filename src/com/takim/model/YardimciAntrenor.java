@@ -1,15 +1,16 @@
 package com.takim.model;
 
 import java.time.LocalDate;
-import java.time.Month;
 
 public class YardimciAntrenor extends Calisan {
 
+    // --- DEĞİŞKENLER (FIELDS) ---
     private String uzmanlikAlani; // Görev (Yardımcı, Kaleci vb.)
     private double sahaIciSure;   // Görev Süresi (Yıl)
     private String uyruk;
     private String antrenorlukLisansi;
 
+    // --- CONSTRUCTOR ---
     public YardimciAntrenor(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                             double maas, LocalDate iseBaslamaTarihi, String uzmanlikAlani,
                             double sahaIciSure, String uyruk, String antrenorlukLisansi) {
@@ -20,11 +21,20 @@ public class YardimciAntrenor extends Calisan {
         this.antrenorlukLisansi = antrenorlukLisansi;
     }
 
+    // --- GETTER VE SETTER METOTLARI ---
     public String getUzmanlikAlani() { return uzmanlikAlani; }
-    public double getSahaIciSure() { return sahaIciSure; }
-    public String getUyruk() { return uyruk; }
-    public String getAntrenorlukLisansi() { return antrenorlukLisansi; }
+    public void setUzmanlikAlani(String uzmanlikAlani) { this.uzmanlikAlani = uzmanlikAlani; }
 
+    public double getSahaIciSure() { return sahaIciSure; }
+    public void setSahaIciSure(double sahaIciSure) { this.sahaIciSure = sahaIciSure; }
+
+    public String getUyruk() { return uyruk; }
+    public void setUyruk(String uyruk) { this.uyruk = uyruk; }
+
+    public String getAntrenorlukLisansi() { return antrenorlukLisansi; }
+    public void setAntrenorlukLisansi(String antrenorlukLisansi) { this.antrenorlukLisansi = antrenorlukLisansi; }
+
+    // --- MAASHESAPLANABILIR INTERFACE METOTLARI ---
     @Override
     public double maasHesapla() {
         // Senin manuel girdiğin temel maaşı döndürür
@@ -44,8 +54,11 @@ public class YardimciAntrenor extends Calisan {
         return maasHesapla() + primHesapla(gol, asist);
     }
 
-
-    @Override public void bilgiYazdir() { System.out.println(this.toString()); }
+    // --- OVERRIDE METOTLAR (BILGI YAZDIR VE TOSTRING) ---
+    @Override
+    public void bilgiYazdir() {
+        System.out.println(this.toString());
+    }
 
     @Override
     public String toString() {

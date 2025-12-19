@@ -2,12 +2,12 @@ package com.takim.model;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.Month;
 
 public class Fizyoterapist extends Calisan implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    // --- DEĞİŞKENLER (FIELDS) ---
     private String uzmanlikAlani;
     private boolean sporMasajYetkisi;
     private short tecrubeYili;
@@ -15,6 +15,7 @@ public class Fizyoterapist extends Calisan implements Serializable {
     private String mezuniyetUniversitesi;
     private double gorevSuresiYil;
 
+    // --- CONSTRUCTOR ---
     public Fizyoterapist(String ad, String soyad, LocalDate dogumTarihi, String tcKimlikNo,
                          double maas, LocalDate iseBaslamaTarihi,
                          String uzmanlikAlani, boolean sporMasajYetkisi,
@@ -28,6 +29,7 @@ public class Fizyoterapist extends Calisan implements Serializable {
         this.gorevSuresiYil = gorevSuresiYil;
     }
 
+    // --- GETTER METOTLARI ---
     public String getUzmanlikAlani() { return uzmanlikAlani; }
     public boolean isSporMasajYetkisi() { return sporMasajYetkisi; }
     public short getTecrubeYili() { return tecrubeYili; }
@@ -35,6 +37,7 @@ public class Fizyoterapist extends Calisan implements Serializable {
     public String getMezuniyetUniversitesi() { return mezuniyetUniversitesi; }
     public double getGorevSuresiYil() { return gorevSuresiYil; }
 
+    // --- MAASHESAPLANABILIR INTERFACE METOTLARI ---
     @Override
     public double maasHesapla() {
         // Senin manuel girdiğin maaşı döndürür
@@ -55,11 +58,11 @@ public class Fizyoterapist extends Calisan implements Serializable {
         return maasHesapla() + primHesapla(gol, asist);
     }
 
-
-
-
-
-    @Override public void bilgiYazdir() { System.out.println(this.toString()); }
+    // --- OVERRIDE METOTLAR (BILGI YAZDIR VE TOSTRING) ---
+    @Override
+    public void bilgiYazdir() {
+        System.out.println(this.toString());
+    }
 
     @Override
     public String toString() {
