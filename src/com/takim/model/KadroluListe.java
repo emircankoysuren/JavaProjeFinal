@@ -3,6 +3,8 @@ package com.takim.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.takim.exception.KapasiteDolduException;
+
 /**
  * 5.1: Generic Sinif gereksinimini karsilar.
  */
@@ -16,10 +18,12 @@ public class KadroluListe<T extends Kisi> {
         this.maksimumKapasite = maksimumKapasite;
     }
 
-    public void ekle(T eleman) {
-        if (liste.size() < maksimumKapasite) {
-            liste.add(eleman);
+    public void ekle(T eleman) throws KapasiteDolduException {
+        if (liste.size() >= maksimumKapasite) {
+            // Kapasite dolduysa hata nesnesini olustur ve firlat
+            throw new KapasiteDolduException("Hata: Kadro kapasitesi (" + maksimumKapasite + ") doldu!");
         }
+        liste.add(eleman);
     }
 
     // 5.1: Wildcard kullanimi ornegi - List<?>

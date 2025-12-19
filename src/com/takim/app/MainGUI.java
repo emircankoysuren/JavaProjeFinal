@@ -11,7 +11,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.cell.PropertyValueFactory;
+import com.takim.exception.GecersizFormaNoException;
+import com.takim.exception.KapasiteDolduException;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -368,27 +369,40 @@ public class MainGUI extends Application {
         dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
-        grid.setHgap(10); grid.setVgap(10);
+        grid.setHgap(10);
+        grid.setVgap(10);
         grid.setPadding(new Insets(20));
 
-        TextField adField = new TextField(); adField.setPromptText("Örn: Mauro");
-        TextField soyadField = new TextField(); soyadField.setPromptText("Örn: Icardi");
+        TextField adField = new TextField();
+        adField.setPromptText("Örn: Mauro");
+        TextField soyadField = new TextField();
+        soyadField.setPromptText("Örn: Icardi");
         DatePicker dogumTarihiPicker = new DatePicker(LocalDate.of(1993, 2, 19));
-        TextField ulkeField = new TextField(); ulkeField.setPromptText("Örn: Arjantin");
-        TextField fNoField = new TextField(); fNoField.setPromptText("1-99 arası");
+        TextField ulkeField = new TextField();
+        ulkeField.setPromptText("Örn: Arjantin");
+        TextField fNoField = new TextField();
+        fNoField.setPromptText("1-99 arası");
         ComboBox<String> mevkiBox = new ComboBox<>();
         mevkiBox.getItems().addAll("Kaleci", "Defans", "Ortasaha", "Forvet");
         mevkiBox.setValue("Forvet");
-        TextField maasField = new TextField(); maasField.setPromptText("Örn: 15 (Milyon €)");
+        TextField maasField = new TextField();
+        maasField.setPromptText("Örn: 15 (Milyon €)");
 
 
-        grid.add(new Label("Ad:"), 0, 0);          grid.add(adField, 1, 0);
-        grid.add(new Label("Soyad:"), 0, 1);       grid.add(soyadField, 1, 1);
-        grid.add(new Label("Doğum Tarihi:"), 0, 2); grid.add(dogumTarihiPicker, 1, 2);
-        grid.add(new Label("Ülke:"), 0, 3);        grid.add(ulkeField, 1, 3);
-        grid.add(new Label("Forma No:"), 0, 4);    grid.add(fNoField, 1, 4);
-        grid.add(new Label("Mevki:"), 0, 5);       grid.add(mevkiBox, 1, 5);
-        grid.add(new Label("Maaş (Milyon €):"), 0, 6);    grid.add(maasField, 1, 6);
+        grid.add(new Label("Ad:"), 0, 0);
+        grid.add(adField, 1, 0);
+        grid.add(new Label("Soyad:"), 0, 1);
+        grid.add(soyadField, 1, 1);
+        grid.add(new Label("Doğum Tarihi:"), 0, 2);
+        grid.add(dogumTarihiPicker, 1, 2);
+        grid.add(new Label("Ülke:"), 0, 3);
+        grid.add(ulkeField, 1, 3);
+        grid.add(new Label("Forma No:"), 0, 4);
+        grid.add(fNoField, 1, 4);
+        grid.add(new Label("Mevki:"), 0, 5);
+        grid.add(mevkiBox, 1, 5);
+        grid.add(new Label("Maaş (Milyon €):"), 0, 6);
+        grid.add(maasField, 1, 6);
 
         dialog.getDialogPane().setContent(grid);
 
@@ -413,11 +427,27 @@ public class MainGUI extends Application {
 
         dialog.showAndWait().ifPresent(futbolcu -> {
             try {
+                // Burada hem kapasiteyi hem de forma numarasını kontrol ediyoruz
                 service.futbolcuEkle(futbolcu);
+
                 String formatliMaas = String.format(Locale.GERMANY, "%,.0f €", futbolcu.getMaas());
                 showMessage(futbolcu.getAd() + " " + futbolcu.getSoyad() + " kadroya eklendi. (Maaş: " + formatliMaas + ")", Formatlayici.YESIL);
+
+            } catch (KapasiteDolduException e) {
+                // KadroluListe'den fırlatılan kapasite hatası burada yakalanır
+                Alert alert = new Alert(Alert.AlertType.WARNING);
+                alert.setTitle("Kadro Dolu");
+                alert.setHeaderText("Kapasite Sınırı Aşıldı");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
+
+            } catch (GecersizFormaNoException e) {
+                // Forma numarası hatası burada yakalanır
+                gosterHataAlert("Hata", e.getMessage());
+
             } catch (Exception e) {
-                gosterHataAlert("Ekleme Hatası", e.getMessage());
+                // Diğer beklenmedik hatalar için
+                gosterHataAlert("Ekleme Hatası", "Bir sorun oluştu: " + e.getMessage());
             }
         });
     }

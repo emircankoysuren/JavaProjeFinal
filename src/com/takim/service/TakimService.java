@@ -2,6 +2,7 @@ package com.takim.service;
 
 import com.takim.model.*;
 import com.takim.exception.GecersizFormaNoException;
+import com.takim.exception.KapasiteDolduException;
 import com.takim.util.DosyaIslemleri;
 import com.takim.util.Formatlayici;
 
@@ -12,6 +13,8 @@ import java.util.*;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
+
+
 
 public class TakimService {
 
@@ -70,12 +73,22 @@ public class TakimService {
         if (yardimciAntrenorCounter < 0) yardimciAntrenorCounter = 0;
         if (fizyoterapistCounter < 0) fizyoterapistCounter = 0;
     }
+    private KadroluListe<Futbolcu> genericKadro = new KadroluListe<>(24);
 
-    public void futbolcuEkle(Futbolcu futbolcu) throws GecersizFormaNoException {
+    // Metodu şu şekilde güncelleyin
+    public void futbolcuEkle(Futbolcu futbolcu) throws GecersizFormaNoException, KapasiteDolduException {
+        // 1. ADIM: Jenerik listeye eklemeyi dene (Eğer kapasite doluysa burada exception fırlatır)
+        genericKadro.ekle(futbolcu);
+
+        // 2. ADIM: Eğer yukarıdaki satır hata fırlatmazsa (kapasite uygunsa) diğer listelere ekle
         futbolcuKadrosu.add(futbolcu);
         formaNoHaritasi.put(futbolcu.getFormaNo(), futbolcu);
+
+        // Verileri kaydet
         tumVerileriKaydet();
     }
+
+
 
     public void teknikDirektorEkle(TeknikDirektor td) {
         teknikDirektorler.add(td);
@@ -325,6 +338,16 @@ public class TakimService {
             System.out.println("Geçersiz forma numarası formatı!");
         }
         return null;
+    }
+    public void wildcardTesti() {
+        KadroluListe<Futbolcu> testListe = new KadroluListe<>(10);
+
+        // List<?> örneğini kullanmış oluruz:
+        int sayi = testListe.tipineGoreSay(futbolcuKadrosu);
+        System.out.println("Toplam kayıt: " + sayi);
+
+        // List<? extends Kisi> örneğini kullanmış oluruz:
+        testListe.altTipiIsle(futbolcuKadrosu);
     }
 
 }
