@@ -15,7 +15,7 @@ public class Formatlayici {
     public static final String RESET = "\u001B[0m";
 
     // 6. Bolum: Tarih Formatlama ornegi - Statik alanlar
-    public static final DateTimeFormatter TARİH_FORMATI = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    public static final DateTimeFormatter TARIH_FORMATI = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     /**
      * Verilen mesaji istenen renkte dondurur.
