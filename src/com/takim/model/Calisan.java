@@ -3,9 +3,7 @@ package com.takim.model;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-/**
- * 4.2: Abstract Sınıf (2/2). Maasli personel icin temel sinif.
- */
+
 public abstract class Calisan extends Kisi implements MaasHesaplanabilir, Raporlanabilir {
 
     // --- DEĞİŞKENLER (FIELDS) ---

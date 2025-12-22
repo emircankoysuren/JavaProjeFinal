@@ -1,11 +1,11 @@
 ========= KULUP FINANSAL ANALIZ RAPORU =========
 
-Futbolcu Maas Gideri           : 14,80M EUR
-Dagitilan Toplam Prim          : 0,000M EUR
-Teknik Direktor Gideri         : 0 EUR
-Antrenor Kadrosu Gideri        : 0 EUR
-Fizyoterapist Gideri           : 0 EUR
+Futbolcu Maas Gideri           : 33,30M EUR
+Dagitilan Toplam Prim          : 0,195M EUR
+Teknik Direktor Gideri         : 500.000 EUR
+Antrenor Kadrosu Gideri        : 50.000 EUR
+Fizyoterapist Gideri           : 100.000 EUR
 
 ------------------------------------------------
-TOPLAM KULUP GIDERI (Net): 14.800.000 EUR
+TOPLAM KULUP GIDERI (Net): 34.145.000 EUR
 ================================================

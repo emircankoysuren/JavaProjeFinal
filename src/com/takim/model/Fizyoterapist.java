@@ -40,25 +40,23 @@ public class Fizyoterapist extends Calisan implements Serializable {
     // --- MAASHESAPLANABILIR INTERFACE METOTLARI ---
     @Override
     public double maasHesapla() {
-        // Senin manuel girdiğin maaşı döndürür
+
         return getMaas();
     }
 
     @Override
     public double primHesapla(int gol, int asist) {
-        // Fizyoterapistlerin gol/asist primi olmaz
-        // Ancak profesyonellik gereği: Eğer masaj yetkisi varsa sabit 2000€ ek prim alabilir
+
         return this.sporMasajYetkisi ? 2000.0 : 0.0;
     }
 
     @Override
     public double toplamMaliyetHesapla(int gol, int asist) {
-        // Kulüp Gideri = Manuel Maaş + Masaj Primi (varsa)
-        // Burada + operatörü ile aritmetik gereksinim sağlanır
+
         return maasHesapla() + primHesapla(gol, asist);
     }
 
-    // --- OVERRIDE METOTLAR (BILGI YAZDIR VE TOSTRING) ---
+
     @Override
     public void bilgiYazdir() {
         System.out.println(this.toString());

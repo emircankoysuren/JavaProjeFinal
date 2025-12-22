@@ -3,8 +3,8 @@ package com.takim.service;
 import com.takim.model.*;
 import com.takim.exception.GecersizFormaNoException;
 import com.takim.exception.KapasiteDolduException;
-import com.takim.util.DosyaIslemleri;
-import com.takim.util.Formatlayici;
+import com.takim.util.DosyaWR;
+import com.takim.util.Renklendirici;
 
 import java.io.IOException;
 import java.io.FileWriter;
@@ -43,6 +43,14 @@ public class TakimService {
         tumVerileriYukle();
         initCounters();
         futbolcuKadrosu.forEach(f -> formaNoHaritasi.put(f.getFormaNo(), f));
+    }
+    public void wildcardTesti() {
+        KadroluListe<Futbolcu> testListe = new KadroluListe<>(24);
+
+        int sayi = testListe.tipineGoreSay(futbolcuKadrosu);
+        System.out.println("Toplam kayıt: " + sayi);
+
+        testListe.altTipiIsle(futbolcuKadrosu);
     }
     // Personel ID'lerinin cakismamasi icin mevcut kayitlar uzerinden sayac verilerini gunceller.
     private void initCounters() {
@@ -101,7 +109,7 @@ public class TakimService {
     }
 
     public String haftalikProgramiGoster() {
-        StringBuilder sb = new StringBuilder(Formatlayici.renklendir("--- GUNCEL HAFTALIK PROGRAM ---\n", Formatlayici.MAVI));
+        StringBuilder sb = new StringBuilder(Renklendirici.renklendir("--- GUNCEL HAFTALIK PROGRAM ---\n", Renklendirici.MAVI));
         for (int i = 0; i < gunler.length; i++) {
             sb.append(String.format("%-10s : %s\n", gunler[i], haftalikAktiviteler[i]));
         }
@@ -135,21 +143,21 @@ public class TakimService {
 
     public void tumVerileriKaydet() {
         try {
-            DosyaIslemleri.dosyayaYaz(futbolcuKadrosu, FUTBOLCU_DOSYA);
-            DosyaIslemleri.dosyayaYaz(teknikDirektorler, TEKNIK_DIREKTOR_DOSYA);
-            DosyaIslemleri.dosyayaYaz(yardimciAntrenorler, YARDIMCI_ANTRENOR_DOSYA);
-            DosyaIslemleri.dosyayaYaz(fizyoterapistler, FIZYOTERAPIST_DOSYA);
-            DosyaIslemleri.dosyayaYaz(new ArrayList<>(macGecmisi.values()), FIKSTUR_DOSYA);
+            DosyaWR.dosyayaYaz(futbolcuKadrosu, FUTBOLCU_DOSYA);
+            DosyaWR.dosyayaYaz(teknikDirektorler, TEKNIK_DIREKTOR_DOSYA);
+            DosyaWR.dosyayaYaz(yardimciAntrenorler, YARDIMCI_ANTRENOR_DOSYA);
+            DosyaWR.dosyayaYaz(fizyoterapistler, FIZYOTERAPIST_DOSYA);
+            DosyaWR.dosyayaYaz(new ArrayList<>(macGecmisi.values()), FIKSTUR_DOSYA);
         } catch (IOException e) { System.err.println("Kayit hatasi: " + e.getMessage()); }
     }
 
     public void tumVerileriYukle() {
         try {
-            futbolcuKadrosu = DosyaIslemleri.dosyadanOku(FUTBOLCU_DOSYA, Futbolcu.class);
-            teknikDirektorler = DosyaIslemleri.dosyadanOku(TEKNIK_DIREKTOR_DOSYA, TeknikDirektor.class);
-            yardimciAntrenorler = DosyaIslemleri.dosyadanOku(YARDIMCI_ANTRENOR_DOSYA, YardimciAntrenor.class);
-            fizyoterapistler = DosyaIslemleri.dosyadanOku(FIZYOTERAPIST_DOSYA, Fizyoterapist.class);
-            List<MacVerisi> yuklenenMaclar = DosyaIslemleri.dosyadanOku(FIKSTUR_DOSYA, MacVerisi.class);
+            futbolcuKadrosu = DosyaWR.dosyadanOku(FUTBOLCU_DOSYA, Futbolcu.class);
+            teknikDirektorler = DosyaWR.dosyadanOku(TEKNIK_DIREKTOR_DOSYA, TeknikDirektor.class);
+            yardimciAntrenorler = DosyaWR.dosyadanOku(YARDIMCI_ANTRENOR_DOSYA, YardimciAntrenor.class);
+            fizyoterapistler = DosyaWR.dosyadanOku(FIZYOTERAPIST_DOSYA, Fizyoterapist.class);
+            List<MacVerisi> yuklenenMaclar = DosyaWR.dosyadanOku(FIKSTUR_DOSYA, MacVerisi.class);
             if (yuklenenMaclar != null) yuklenenMaclar.forEach(m -> macGecmisi.put(m.getMacTarihi(), m));
         } catch (Exception e) { System.err.println("Yukleme hatasi veya dosya bos."); }
     }

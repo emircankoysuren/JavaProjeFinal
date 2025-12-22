@@ -5,9 +5,8 @@ import java.util.List;
 
 import com.takim.exception.KapasiteDolduException;
 
-/**
- * 5.1: Generic Sinif gereksinimini karsilar.
- */
+
+
 public class KadroluListe<T extends Kisi> {
 
     private final List<T> liste;
@@ -18,6 +17,12 @@ public class KadroluListe<T extends Kisi> {
         this.maksimumKapasite = maksimumKapasite;
     }
 
+    /**
+
+    Listeye eleman ekler eğer kapasite aşılırsa özel KapasiteDolduException fırlatır
+    Bu sayede Checked Exception mekanizmasıyla hata yönetimi zorunlu kılınır
+ */
+
     public void ekle(T eleman) throws KapasiteDolduException {
         if (liste.size() >= maksimumKapasite) {
             // Kapasite dolduysa hata nesnesini olustur ve firlat
@@ -26,12 +31,23 @@ public class KadroluListe<T extends Kisi> {
         liste.add(eleman);
     }
 
-    // 5.1: Wildcard kullanimi ornegi - List<?>
+    /**
+
+     Wildcard (?) kullanarak tipi ne olursa olsun herhangi bir listenin boyutunu döner
+     Wilcard örneği
+     */
+
     public int tipineGoreSay(List<?> herhangiListe) {
         return (herhangiListe != null) ? herhangiListe.size() : 0;
     }
 
-    // 5.1: Wildcard kullanimi ornegi - List<? extends T>
+    /**
+
+     Upper Bounded Wildcard (? extends Kisi) kullanımı
+     Kisi sınıfından türetilmiş herhangi bir alt sınıf listesini kabul eder
+     ve polimorfizm sayesinde ortak metotları çağırır
+     */
+
     public void altTipiIsle(List<? extends Kisi> altTipListe) {
         for (Kisi kisi : altTipListe) {
             kisi.bilgiYazdir();

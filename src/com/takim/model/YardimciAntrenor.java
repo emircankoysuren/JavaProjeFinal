@@ -37,7 +37,7 @@ public class YardimciAntrenor extends Calisan {
     // --- MAASHESAPLANABILIR INTERFACE METOTLARI ---
     @Override
     public double maasHesapla() {
-        // Senin manuel girdiğin temel maaşı döndürür
+
         return getMaas();
     }
 
@@ -49,12 +49,11 @@ public class YardimciAntrenor extends Calisan {
 
     @Override
     public double toplamMaliyetHesapla(int gol, int asist) {
-        // Kulüp Gideri = Temel Maaş + Prim (0)
-        // Aritmetik işlem (+ operatörü) kullanımı
+
         return maasHesapla() + primHesapla(gol, asist);
     }
 
-    // --- OVERRIDE METOTLAR (BILGI YAZDIR VE TOSTRING) ---
+
     @Override
     public void bilgiYazdir() {
         System.out.println(this.toString());

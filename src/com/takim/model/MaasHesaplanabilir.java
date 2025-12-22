@@ -1,8 +1,7 @@
 package com.takim.model;
 
 /**
- * 4.3: Interface gereksinimi.
- * Finansal Analiz Raporu için gerekli temel hesaplamaları sağlar.
+ * Finansal Analiz Raporu için gerekli temel hesaplamaları sağlar
  */
 public interface MaasHesaplanabilir {
     // 1. Temel Maaş Hesaplama (Kullanıcı girişi + varsa kıdem/bonus)

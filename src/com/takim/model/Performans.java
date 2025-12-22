@@ -1,5 +1,9 @@
 package com.takim.model;
 
+/**
+ * Performans verileri interface'i
+ */
+
 public interface Performans {
     // Performans puanını (0-100 arası veya skor bazlı) hesaplar
     double performansPuaniniHesapla();

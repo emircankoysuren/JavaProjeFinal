@@ -4,9 +4,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
-/**
- * 1.1: Alt Sinif (4/4) - Utility sınıfı olarak da kullanılabilir.
- */
+
 public class MacVerisi implements Serializable {
     private LocalDate macTarihi;
     private LocalTime macSaati;

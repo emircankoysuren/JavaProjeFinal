@@ -109,7 +109,7 @@ public class TeknikDirektor extends Calisan implements Serializable, Performans 
     public double getBonusHedefi() { return bonusHedefi; }
     public void setBonusHedefi(double bonusHedefi) { this.bonusHedefi = bonusHedefi; }
 
-    // --- OVERRIDE METOTLAR (BILGI YAZDIR VE TOSTRING) ---
+
     @Override
     public void bilgiYazdir() {
         System.out.println(this.toString());

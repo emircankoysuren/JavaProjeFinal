@@ -2,7 +2,7 @@ package com.takim.app;
 
 import com.takim.service.TakimService;
 import com.takim.model.*;
-import com.takim.util.Formatlayici;
+import com.takim.util.Renklendirici;
 import com.takim.exception.GecersizFormaNoException;
 import com.takim.exception.KapasiteDolduException;
 
@@ -191,7 +191,7 @@ public class MainGUI extends Application {
             try {
                 service.futbolcuEkle(futbolcu);
                 String formatliMaas = String.format(Locale.GERMANY, "%,.0f EUR", futbolcu.getMaas());
-                showMessage(futbolcu.getAd() + " " + futbolcu.getSoyad() + " kadroya eklendi. (Maas: " + formatliMaas + ")", Formatlayici.YESIL);
+                showMessage(futbolcu.getAd() + " " + futbolcu.getSoyad() + " kadroya eklendi. (Maas: " + formatliMaas + ")", Renklendirici.YESIL);
             } catch (KapasiteDolduException e) {
                 Alert alert = new Alert(Alert.AlertType.WARNING);
                 alert.setTitle("Kadro Dolu");
@@ -616,7 +616,7 @@ public class MainGUI extends Application {
                 int asist = Integer.parseInt(asistRes.orElse("0"));
 
                 if (service.performansVerisiGir(formaNo, gol, asist)) {
-                    showMessage("Forma No " + formaNo + " basariyla guncellendi.", Formatlayici.YESIL);
+                    showMessage("Forma No " + formaNo + " basariyla guncellendi.", Renklendirici.YESIL);
                 } else {
                     gosterHataAlert("Hata", "Bu forma numarasina sahip futbolcu bulunamadi.");
                 }
@@ -678,7 +678,7 @@ public class MainGUI extends Application {
 
         dialog.showAndWait().ifPresent(yeniProgram -> {
             service.haftalikProgramGuncelle(yeniProgram);
-            showMessage("Haftalik antrenman programi basariyla guncellendi.", Formatlayici.YESIL);
+            showMessage("Haftalik antrenman programi basariyla guncellendi.", Renklendirici.YESIL);
             handleDisplayWeeklyProgram();
         });
     }
@@ -760,7 +760,7 @@ public class MainGUI extends Application {
         } else {
             service.getMacGecmisi().forEach((tarih, veri) -> {
                 sb.append(String.format(">> %s\n", veri.getMacTuru().toUpperCase()));
-                String tarihStr = Formatlayici.TARIH_FORMATI.format(tarih);
+                String tarihStr = Renklendirici.TARIH_FORMATI.format(tarih);
                 sb.append(String.format("[%s] GS vs %-15s | Skor: %s\n", tarihStr, veri.getRakipTakim(), veri.getSkor()));
                 sb.append("-----------------------------------------------------------\n");
             });

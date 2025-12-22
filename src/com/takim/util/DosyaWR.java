@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  * Dosya okuma ve yazma işlemlerini gerçekleştiren yardımcı sınıf.
  * Listeyi Serileştirme (Serialization) yoluyla kaydeder ve yükler.
  */
-public class DosyaIslemleri {
+public class DosyaWR {
 
     /**
      * Bir listeyi belirtilen dosyaya yazar (Serileştirir).
@@ -20,7 +20,7 @@ public class DosyaIslemleri {
         try {
             oos = new ObjectOutputStream(new FileOutputStream(dosyaAdi));
             oos.writeObject(liste);
-            System.out.println(Formatlayici.renklendir(dosyaAdi + " dosyası başarıyla kaydedildi.", Formatlayici.MAVI));
+            System.out.println(Renklendirici.renklendir(dosyaAdi + " dosyası başarıyla kaydedildi.", Renklendirici.MAVI));
         } finally {
             if (oos != null) {
                 oos.close(); // Dosya her koşulda kapatılır
@@ -30,7 +30,7 @@ public class DosyaIslemleri {
     }
 
     /**
-     * Belirtilen dosyadan listeyi okur (De-serileştirir) ve NULL değerleri filtreler.
+     *  (De-serialization)
      */
     public static <T> List<T> dosyadanOku(String dosyaAdi, Class<T> tip) throws IOException, ClassNotFoundException {
         File file = new File(dosyaAdi);
@@ -42,7 +42,7 @@ public class DosyaIslemleri {
             @SuppressWarnings("unchecked")
             List<T> liste = (List<T>) ois.readObject();
 
-            // YENİ: Okunan listedeki null elemanları temizle
+
             if (liste != null) {
                 return liste.stream().filter(Objects::nonNull).collect(Collectors.toList());
             }

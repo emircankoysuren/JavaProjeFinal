@@ -52,6 +52,12 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
         this.toplamAsist += yeniAsist;
     }
 
+    /**
+
+     Method Overloading: Aynı isimli metotların farklı parametrelerle kullanımı.
+     Hem sadece gol bilgisiyle hem de gol+asist bilgisiyle performans güncellenebilir
+     */
+
     public void performansGuncelle(int gol, int asist) {
         setGolSayisi(this.golSayisi + gol);
         setAsistSayisi(this.asistSayisi + asist);
@@ -96,7 +102,7 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
 
     @Override
     public double primHesapla(int g, int a) {
-        // Kümülatif sezon verisi kullanılıyor
+
         return (this.toplamGol * 0.01) + (this.toplamAsist * 0.005);
     }
 
@@ -144,7 +150,7 @@ public class Futbolcu extends Kisi implements Serializable, Raporlanabilir, Perf
     public char getMevkisizKarakter() { return mevkisizKarakter; }
     public void setMevkisizKarakter(char mevkisizKarakter) { this.mevkisizKarakter = mevkisizKarakter; }
 
-    // --- OVERRIDE METOTLAR (TOSTRING) ---
+
     @Override
     public String toString() {
         return String.format(
